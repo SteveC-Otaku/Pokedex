@@ -41,6 +41,8 @@ jobs:
         run: pnpm build
         env:
           NODE_ENV: production
+          # 标记这是 GitHub Pages 构建，启用 basePath
+          GITHUB_PAGES: 'true'
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
