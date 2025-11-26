@@ -25,8 +25,23 @@ export interface StoredPokemonFullData {
   data: Record<number, PokemonWithDetails>
 }
 
-const LIST_FILE_PATH = "/data/pokemon-list.json"
-const FULL_DATA_FILE_PATH = "/data/pokemon-full-data.json"
+// 动态获取 basePath（GitHub Pages 使用 /Pokedex）
+const getBasePath = () => {
+  // 在浏览器环境中，从 window.location 检测
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname
+    // 如果路径以 /Pokedex 开头，说明使用了 basePath
+    if (pathname.startsWith('/Pokedex')) {
+      return '/Pokedex'
+    }
+  }
+  // 构建时设置的环境变量
+  return process.env.NEXT_PUBLIC_BASE_PATH || ''
+}
+
+const basePath = getBasePath()
+const LIST_FILE_PATH = `${basePath}/data/pokemon-list.json`
+const FULL_DATA_FILE_PATH = `${basePath}/data/pokemon-full-data.json`
 
 // 缓存加载的数据
 let cachedListData: PokemonListItem[] | null = null
