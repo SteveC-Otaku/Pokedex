@@ -1,0 +1,4 @@
+# 此目录用于存储预生成的宝可梦数据
+# 运行 pnpm generate-data 后会在此目录生成 pokemon-list.json
+
+

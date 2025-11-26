@@ -12,6 +12,9 @@ out/
 dist/
 build/
 
+# GitHub Pages - docs 目录需要提交，所以不忽略
+# docs/
+
 # Production
 *.log
 npm-debug.log*

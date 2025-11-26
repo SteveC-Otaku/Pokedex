@@ -12,7 +12,8 @@
     "update-locations": "tsx scripts/update-pokemon-locations.ts",
     "update-locations-wiki": "tsx scripts/update-locations-from-wiki.ts",
     "clean-wiki-locations": "tsx scripts/clean-wiki-locations.ts",
-    "package": "tsx scripts/package-for-distribution.ts"
+    "package": "tsx scripts/package-for-distribution.ts",
+    "build:pages": "tsx scripts/build-for-github-pages.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
