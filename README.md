@@ -132,26 +132,44 @@ Pokedex/
 
 ## 🌐 GitHub Pages 部署
 
-### 自动部署（已配置）
+### 部署方法（推荐）
 
-项目已配置 GitHub Actions 自动部署：
+使用 `docs/` 目录部署，这是最简单可靠的方法：
 
-1. 在 GitHub 仓库设置中，进入 **Settings > Pages**
-2. 选择 **Source**: `GitHub Actions`
-3. 推送代码到 `main` 分支后，会自动构建并部署
+1. **本地构建并准备文件**：
+   ```bash
+   pnpm build:pages
+   ```
+   这会自动：
+   - 构建静态网站（使用正确的 basePath）
+   - 将文件复制到 `docs/` 目录
+   - 创建 `.nojekyll` 文件
+
+2. **提交并推送**：
+   ```bash
+   git add docs/
+   git commit -m "Update GitHub Pages"
+   git push origin main
+   ```
+
+3. **在 GitHub 设置 Pages**：
+   - 进入仓库 **Settings > Pages**
+   - **Source** 选择：`Deploy from a branch`
+   - **Branch** 选择：`main` / `docs`
+   - 点击 **Save**
+
+4. **等待部署完成**（通常 1-2 分钟）
 
 部署地址：`https://stevec-otaku.github.io/Pokedex/`
 
-### 手动部署
+### 更新网站
 
-如果需要手动部署：
-
+每次更新代码后，只需运行：
 ```bash
-# 构建静态文件（会自动使用 /Pokedex basePath）
-GITHUB_PAGES=true pnpm build
-
-# 构建后的文件在 out/ 目录
-# 将 out/ 目录的内容推送到 gh-pages 分支
+pnpm build:pages
+git add docs/
+git commit -m "Update site"
+git push origin main
 ```
 
 ## 🤝 贡献
