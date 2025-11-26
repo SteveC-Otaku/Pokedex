@@ -105,7 +105,9 @@ export default function Pokedex() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <img 
-                src="/Pokedex.webp" 
+                src={typeof window !== 'undefined' && window.location.pathname.startsWith('/Pokedex') 
+                  ? '/Pokedex/Pokedex.webp' 
+                  : '/Pokedex.webp'}
                 alt={t.pokedex}
                 className="h-10 w-auto object-contain"
               />
