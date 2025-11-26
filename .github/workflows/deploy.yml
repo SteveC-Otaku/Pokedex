@@ -34,6 +34,19 @@ jobs:
         with:
           version: 8
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -43,6 +56,16 @@ jobs:
           NODE_ENV: production
           # 标记这是 GitHub Pages 构建，启用 basePath
           GITHUB_PAGES: 'true'
+        continue-on-error: false
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "out" ]; then
+            echo "❌ 错误：out 目录不存在"
+            exit 1
+          fi
+          echo "✅ 构建输出目录存在"
+          ls -la out/ | head -20
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
