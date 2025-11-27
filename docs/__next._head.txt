@@ -2,6 +2,6 @@
 2:I[89225,["/Pokedex/_next/static/chunks/f1e68980346fa22d.js"],"ViewportBoundary"]
 4:I[89225,["/Pokedex/_next/static/chunks/f1e68980346fa22d.js"],"MetadataBoundary"]
 5:"$Sreact.suspense"
-0:{"buildId":"UwX1ODmZwDxe_R0lAbkN6","rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"q70urGkRYSzJMKZ1o2vGG","rsc":["$","$1","h",{"children":[null,["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
 6:[["$","title","0",{"children":"Pokédex 宝可梦图鉴"}],["$","meta","1",{"name":"description","content":"全面的宝可梦图鉴，包含详细信息、属性克制、招式表和捕获率计算器"}]]

@@ -112,15 +112,30 @@ export default function Pokedex() {
       <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <img 
-                src={typeof window !== 'undefined' && window.location.pathname.startsWith('/Pokedex') 
-                  ? '/Pokedex/Pokedex.webp' 
-                  : '/Pokedex.webp'}
-                alt={t.pokedex}
-                className="h-10 w-auto object-contain"
-              />
-            </div>
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={(() => {
+                      // 动态获取 basePath
+                      if (typeof window !== 'undefined') {
+                        // 客户端：从路径判断
+                        const pathname = window.location.pathname
+                        const basePath = pathname.startsWith('/Pokedex') ? '/Pokedex' : ''
+                        return `${basePath}/Pokedex.webp`
+                      }
+                      // 服务端：使用环境变量
+                      return `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/Pokedex.webp`
+                    })()}
+                    alt={t.pokedex}
+                    className="h-10 w-auto object-contain"
+                    onError={(e) => {
+                      // 如果图片加载失败，尝试使用绝对路径
+                      const target = e.target as HTMLImageElement
+                      if (!target.src.includes('/Pokedex/Pokedex.webp')) {
+                        target.src = '/Pokedex/Pokedex.webp'
+                      }
+                    }}
+                  />
+                </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
               <LanguageSelector />
