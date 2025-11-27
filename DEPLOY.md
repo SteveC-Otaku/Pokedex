@@ -17,20 +17,19 @@ git commit -m "添加新功能：队伍保存、形态切换等"
 
 ### 2. 构建并准备部署文件
 
-运行构建脚本，会自动：
-- 构建静态网站（使用 GitHub Pages 配置）
-- 将文件复制到 `docs/` 目录
-- 创建必要的配置文件
+#### 方法一：使用构建脚本（推荐）
+
+如果 `scripts/build-for-github-pages.ts` 存在：
 
 ```bash
 pnpm build:pages
 ```
 
-或者手动执行：
+#### 方法二：手动构建
 
 ```bash
 # 设置环境变量并构建
-GITHUB_PAGES=true NODE_ENV=production pnpm build
+$env:GITHUB_PAGES="true"; $env:NODE_ENV="production"; pnpm build
 
 # 将 out 目录内容复制到 docs 目录
 # Windows PowerShell:
@@ -41,6 +40,9 @@ xcopy /E /I /Y out docs
 
 # Linux/Mac:
 cp -r out/* docs/
+
+# 创建 .nojekyll 文件（告诉 GitHub Pages 不要使用 Jekyll）
+New-Item -Path docs\.nojekyll -ItemType File -Force
 ```
 
 ### 3. 提交并推送到 GitHub
