@@ -6,6 +6,7 @@ import { GENERATIONS, getTypeName } from "@/lib/pokemon-types"
 import type { FilterState, SortBy } from "./pokemon-filters"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { FavoriteButton } from "./favorite-button"
 
 interface PokemonGridProps {
   pokemonList: PokemonListItem[]
@@ -116,22 +117,29 @@ export function PokemonGrid({
           <div className="absolute top-2 left-2 text-xs font-mono text-muted-foreground">
             #{pokemon.id.toString().padStart(3, "0")}
           </div>
-          <img
-            src={pokemon.sprite || "/placeholder.svg"}
-            alt={pokemon.name}
-            className="w-full h-2/3 object-contain pixelated"
-            loading="lazy"
-          />
-          <div className="absolute bottom-2 left-2 right-2">
-            <div className="text-sm font-medium truncate text-center">
-              {pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}
-            </div>
-            <div className="flex justify-center gap-1 mt-1">
-              {pokemon.types.map((type) => (
-                <span key={type} className={`type-${type} text-[10px] px-1.5 py-0.5 rounded text-white`}>
-                  {getTypeName(type, language)}
-                </span>
-              ))}
+          <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
+            <FavoriteButton pokemonId={pokemon.id} size="sm" />
+          </div>
+          <div className="flex-1 flex items-center justify-center min-h-0 pb-16">
+            <img
+              src={pokemon.sprite || "/placeholder.svg"}
+              alt={pokemon.name}
+              className="w-full h-full max-h-full object-contain pixelated"
+              loading="lazy"
+            />
+          </div>
+          <div className="absolute bottom-2 left-2 right-2 z-10">
+            <div className="bg-card/95 backdrop-blur-sm rounded-md px-1 py-0.5">
+              <div className="text-sm font-medium truncate text-center">
+                {pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}
+              </div>
+              <div className="flex justify-center gap-1 mt-1">
+                {pokemon.types.map((type) => (
+                  <span key={type} className={`type-${type} text-[10px] px-1.5 py-0.5 rounded text-white`}>
+                    {getTypeName(type, language)}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </button>

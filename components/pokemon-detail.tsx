@@ -12,15 +12,27 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Pokemon, Move, Location, EvolutionNode } from "@/lib/pokemon-types"
 import { GENERATIONS, getTypeName } from "@/lib/pokemon-types"
 import { getTypeEffectiveness } from "@/lib/pokemon-utils"
-import { fetchPokemonMoves, fetchPokemonLocations } from "@/lib/pokemon-api"
+import { fetchPokemonMoves, fetchPokemonLocations, fetchPokemonDetail } from "@/lib/pokemon-api"
+import { fetchPokemonFormData, fetchPokemonFormMoves } from "@/lib/pokemon-form-api"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { FavoriteButton } from "./favorite-button"
+import { getEvolutionItemInfo } from "@/lib/evolution-items"
+import { getFormName } from "@/lib/form-names"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface PokemonDetailProps {
   pokemon: Pokemon
   selectedGeneration: number
   onClose: () => void
   onSelectPokemon: (id: number) => void
+  onPokemonUpdate?: (pokemon: Pokemon) => void // 当形态切换时通知父组件更新
 }
 
 const STAT_COLORS: { [key: string]: string } = {
@@ -80,13 +92,22 @@ function getGameName(game: string, language: "zh" | "en" | "ja" = "zh"): string 
   return game
 }
 
-export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPokemon }: PokemonDetailProps) {
+export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onClose, onSelectPokemon, onPokemonUpdate }: PokemonDetailProps) {
   const { t, language } = useLanguage()
+  const [pokemon, setPokemon] = useState<Pokemon>(initialPokemon)
+  const [selectedForm, setSelectedForm] = useState<string | null>(null)
+  const [isLoadingForm, setIsLoadingForm] = useState(false)
   const [moves, setMoves] = useState<Move[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [isLoadingMoves, setIsLoadingMoves] = useState(false)
   const [isLoadingLocations, setIsLoadingLocations] = useState(false)
   const [showShiny, setShowShiny] = useState(false)
+  
+  // 当初始宝可梦改变时，重置状态
+  useEffect(() => {
+    setPokemon(initialPokemon)
+    setSelectedForm(null)
+  }, [initialPokemon.id])
   
   const STAT_NAMES: { [key: string]: string } = {
     hp: t.hp,
@@ -95,6 +116,75 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
     specialAttack: t.specialAttack,
     specialDefense: t.specialDefense,
     speed: t.speed,
+  }
+
+  const handleFormChange = async (formName: string) => {
+    if (formName === "default") {
+      // 切换回默认形态
+      try {
+        setIsLoadingForm(true)
+        const defaultPokemon = await fetchPokemonDetail(pokemon.id)
+      setPokemon(defaultPokemon)
+      setSelectedForm(null)
+      // 通知父组件更新
+      if (onPokemonUpdate) {
+        onPokemonUpdate(defaultPokemon)
+      }
+      // 重新加载默认形态的招式
+        setIsLoadingMoves(true)
+        try {
+          const defaultMoves = await fetchPokemonMoves(pokemon.id, selectedGeneration)
+          setMoves(defaultMoves)
+        } catch (error) {
+          console.error("Failed to load default form moves:", error)
+        } finally {
+          setIsLoadingMoves(false)
+        }
+      } catch (error) {
+        console.error("Failed to load default form:", error)
+      } finally {
+        setIsLoadingForm(false)
+      }
+      return
+    }
+
+    try {
+      setIsLoadingForm(true)
+      const formData = await fetchPokemonFormData(formName)
+      const updatedPokemon: Pokemon = {
+        ...pokemon,
+        types: formData.types,
+        stats: formData.stats,
+        abilities: formData.abilities,
+        sprites: formData.sprites,
+        height: formData.height,
+        weight: formData.weight,
+      }
+      setPokemon(updatedPokemon)
+      setSelectedForm(formName)
+      // 通知父组件更新
+      if (onPokemonUpdate) {
+        onPokemonUpdate(updatedPokemon)
+      }
+      
+      // 加载该形态的招式
+      setIsLoadingMoves(true)
+      try {
+        const formMoves = await fetchPokemonFormMoves(formName, selectedGeneration)
+        setMoves(formMoves)
+      } catch (error) {
+        console.error("Failed to load form moves:", error)
+        // 如果形态招式加载失败，尝试使用默认形态的招式
+        const defaultMoves = await fetchPokemonMoves(pokemon.id, selectedGeneration)
+        setMoves(defaultMoves)
+      } finally {
+        setIsLoadingMoves(false)
+      }
+    } catch (error) {
+      console.error("Failed to load form data:", error)
+    } finally {
+      setIsLoadingForm(false)
+    }
   }
 
   useEffect(() => {
@@ -152,16 +242,61 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
   const tmMoves = moves.filter((m) => m.learnMethod === "machine")
 
   const renderEvolutionChain = (node: EvolutionNode, isFirst = true): React.ReactNode => {
+    const evolutionDetails = node.evolutionDetails?.[0]
+    const hasEvolutionInfo = evolutionDetails && (
+      evolutionDetails.minLevel || 
+      evolutionDetails.item || 
+      evolutionDetails.timeOfDay || 
+      evolutionDetails.location
+    )
+
     return (
-      <div key={node.id} className="flex items-center gap-2">
+      <div key={node.id} className="flex items-center gap-3">
         {!isFirst && (
-          <div className="flex flex-col items-center text-xs text-muted-foreground">
-            <ChevronRight className="h-4 w-4" />
-            {node.evolutionDetails?.[0] && (
-              <span className="text-[10px] max-w-16 text-center">
-                {node.evolutionDetails[0].minLevel && `Lv.${node.evolutionDetails[0].minLevel}`}
-                {node.evolutionDetails[0].item && node.evolutionDetails[0].item.replace("-", " ")}
-              </span>
+          <div className="flex flex-col items-center justify-center gap-2 min-w-[80px]">
+            {/* 箭头 */}
+            <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            
+            {/* 进化条件信息 */}
+            {hasEvolutionInfo && (
+              <div className="flex flex-col items-center gap-1.5 px-2 py-1.5 rounded-lg bg-secondary/30 border border-border/50">
+                {evolutionDetails.minLevel && (
+                  <span className="text-[11px] font-medium text-center text-foreground">
+                    Lv.{evolutionDetails.minLevel}
+                  </span>
+                )}
+                {evolutionDetails.item && (() => {
+                  const itemInfo = getEvolutionItemInfo(evolutionDetails.item)
+                  if (!itemInfo) return null
+                  return (
+                    <div className="flex flex-col items-center gap-1">
+                      <img
+                        src={itemInfo.spriteUrl}
+                        alt={itemInfo.nameZh}
+                        className="w-7 h-7 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none"
+                        }}
+                      />
+                      <span className="text-[10px] text-center leading-tight text-foreground font-medium max-w-[70px]">
+                        {itemInfo.nameZh}
+                      </span>
+                    </div>
+                  )
+                })()}
+                {evolutionDetails.timeOfDay && (
+                  <span className="text-[10px] text-center text-muted-foreground">
+                    {evolutionDetails.timeOfDay === "day" ? "白天" : 
+                     evolutionDetails.timeOfDay === "night" ? "夜晚" : 
+                     evolutionDetails.timeOfDay}
+                  </span>
+                )}
+                {evolutionDetails.location && (
+                  <span className="text-[10px] text-center text-muted-foreground">
+                    {evolutionDetails.location}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -169,14 +304,14 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
           onClick={() => onSelectPokemon(node.id)}
           className={cn(
             "flex flex-col items-center p-2 rounded-lg transition-colors",
-            node.id === pokemon.id ? "bg-primary/20" : "hover:bg-secondary",
+            node.id === pokemon.id ? "bg-primary/20 ring-2 ring-primary/30" : "hover:bg-secondary",
           )}
         >
           <img src={node.sprite || "/placeholder.svg"} alt={node.name} className="w-12 h-12 pixelated" />
-          <span className="text-xs mt-1">{node.names[language] || node.names.zh || node.names.en || node.name}</span>
+          <span className="text-xs mt-1 text-center max-w-[80px]">{node.names[language] || node.names.zh || node.names.en || node.name}</span>
         </button>
         {node.evolvesTo.length > 0 && (
-          <div className="flex flex-col gap-2">{node.evolvesTo.map((evo) => renderEvolutionChain(evo, false))}</div>
+          <div className="flex flex-col gap-3">{node.evolvesTo.map((evo) => renderEvolutionChain(evo, false))}</div>
         )}
       </div>
     )
@@ -223,6 +358,7 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
             <div className="flex items-center gap-2 mb-2">
               <span className="text-muted-foreground font-mono">#{pokemon.id.toString().padStart(3, "0")}</span>
               <CardTitle className="text-2xl">{pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}</CardTitle>
+              <FavoriteButton pokemonId={pokemon.id} size="sm" />
             </div>
             <div className="text-muted-foreground text-sm mb-3 capitalize">
               {pokemon.name} · {pokemon.species.genera}
@@ -501,6 +637,60 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
           </TabsContent>
         </Tabs>
 
+        {/* 形态切换 */}
+        {pokemon.forms && pokemon.forms.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium">{t.form}</h4>
+              <Select
+                value={selectedForm || "default"}
+                onValueChange={handleFormChange}
+                disabled={isLoadingForm}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder={t.selectForm} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={initialPokemon.sprites.front || "/placeholder.svg"}
+                        alt="默认"
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span>{t.defaultForm}</span>
+                    </div>
+                  </SelectItem>
+                  {pokemon.forms.map((form) => (
+                    <SelectItem key={form.name} value={form.name}>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={form.sprites.front || "/placeholder.svg"}
+                          alt={form.formName}
+                          className="w-6 h-6 object-contain"
+                        />
+                        <div className="flex flex-col">
+                          <span>{getFormName(form.formName, language)}</span>
+                          <div className="flex gap-1 mt-0.5">
+                            {form.types.map((type) => (
+                              <span
+                                key={type}
+                                className={`type-${type} text-[8px] px-1 py-0.5 rounded text-white`}
+                              >
+                                {getTypeName(type, language)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
         {/* All Sprites */}
         {(pokemon.sprites.frontFemale || pokemon.forms.length > 0) && (
           <div className="mt-6 pt-4 border-t border-border">
@@ -547,7 +737,7 @@ export function PokemonDetail({ pokemon, selectedGeneration, onClose, onSelectPo
                     alt={form.formName}
                     className="w-16 h-16 pixelated"
                   />
-                  <span className="text-xs text-muted-foreground capitalize">{form.formName}</span>
+                  <span className="text-xs text-muted-foreground">{getFormName(form.formName, language)}</span>
                 </div>
               ))}
             </div>

@@ -84,7 +84,19 @@ export function CatchCalculator({ pokemon }: CatchCalculatorProps) {
           {t.catchCalculator}
         </CardTitle>
         <div className="flex items-center gap-3 mt-2">
-          <img src={pokemon.sprites.front || "/placeholder.svg"} alt={pokemon.name} className="w-12 h-12 pixelated" />
+          <img 
+            src={pokemon.sprites.front || "/placeholder.svg"} 
+            alt={pokemon.name} 
+            className="w-12 h-12 pixelated" 
+            key={`${pokemon.id}-${pokemon.sprites.front}`} // 使用组合 key 确保图片更新
+            onError={(e) => {
+              // 如果图片加载失败，回退到默认图片
+              const target = e.target as HTMLImageElement
+              if (target.src !== "/placeholder.svg") {
+                target.src = "/placeholder.svg"
+              }
+            }}
+          />
           <div>
             <div className="font-medium">{pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}</div>
             <div className="text-sm text-muted-foreground">{t.baseCaptureRate}: {pokemon.species.captureRate}</div>

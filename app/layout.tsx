@@ -4,6 +4,9 @@ import { Geist, Geist_Mono } from "next/font/google"
 // 静态导出时不需要Analytics
 // import { Analytics } from "@vercel/analytics/next"
 import { LanguageProvider } from "@/contexts/language-context"
+import { FavoritesProvider } from "@/contexts/favorites-context"
+import { TeamsProvider } from "@/contexts/teams-context"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -21,11 +24,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <LanguageProvider>
+            <FavoritesProvider>
+              <TeamsProvider>
+                {children}
+              </TeamsProvider>
+            </FavoritesProvider>
+          </LanguageProvider>
+        </ThemeProvider>
         {/* 静态导出时不需要Analytics */}
         {/* <Analytics /> */}
       </body>

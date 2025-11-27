@@ -7,8 +7,13 @@ import { PokemonFilters, type FilterState, type SortBy, type SortOrder } from "@
 import { PokemonGrid } from "@/components/pokemon-grid"
 import { PokemonDetail } from "@/components/pokemon-detail"
 import { CatchCalculator } from "@/components/catch-calculator"
+import { PokemonCompare } from "@/components/pokemon-compare"
+import { TeamBuilder } from "@/components/team-builder"
+import { FavoritesList } from "@/components/favorites-list"
 import { LanguageSelector } from "@/components/language-selector"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Card } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { fetchPokemonBasicList, fetchPokemonDetail } from "@/lib/pokemon-api"
 import type { Pokemon, PokemonListItem } from "@/lib/pokemon-types"
 import { useLanguage } from "@/contexts/language-context"
@@ -25,6 +30,10 @@ export default function Pokedex() {
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null)
   const [detailedPokemon, setDetailedPokemon] = useState<Pokemon | null>(null)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
+  const [comparePokemon1, setComparePokemon1] = useState<Pokemon | null>(null)
+  const [comparePokemon2, setComparePokemon2] = useState<Pokemon | null>(null)
+  const [showCompare, setShowCompare] = useState(false)
+  const [activeTab, setActiveTab] = useState("pokedex")
 
   // Fetch pokemon list from local JSON file
   const { data: pokemonList, isLoading: isLoadingList } = useSWR("pokemon-list", fetchPokemonBasicList, {
@@ -113,6 +122,7 @@ export default function Pokedex() {
               />
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <LanguageSelector />
               <PokemonSearch pokemonList={pokemonList || []} onSelect={handleSelectPokemon} isLoading={isLoadingList} />
             </div>
@@ -121,48 +131,107 @@ export default function Pokedex() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left panel - Pokemon Grid */}
-          <div className="lg:col-span-2 space-y-4">
-            <PokemonFilters 
-              filters={filters} 
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onFiltersChange={setFilters}
-              onSortByChange={setSortBy}
-              onSortOrderChange={setSortOrder}
-            />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="pokedex">{t.pokedex}</TabsTrigger>
+            <TabsTrigger value="favorites">{t.favorites}</TabsTrigger>
+            <TabsTrigger value="compare">{t.compare}</TabsTrigger>
+            <TabsTrigger value="team">{t.teamBuilder}</TabsTrigger>
+          </TabsList>
 
-            <PokemonGrid
+          <TabsContent value="pokedex" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left panel - Pokemon Grid */}
+              <div className="lg:col-span-2 space-y-4">
+                <PokemonFilters 
+                  filters={filters} 
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onFiltersChange={setFilters}
+                  onSortByChange={setSortBy}
+                  onSortOrderChange={setSortOrder}
+                />
+
+                <PokemonGrid
+                  pokemonList={pokemonList || []}
+                  filters={filters}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSelect={handleSelectPokemon}
+                  selectedId={selectedPokemonId ?? undefined}
+                  isLoading={isLoadingList}
+                  statsMap={statsMap || undefined}
+                />
+              </div>
+
+              {/* Right panel - Detail & Calculator */}
+              <div className="space-y-6 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
+                {isLoadingDetail && (
+                  <Card className="p-8">
+                    <div className="text-center text-muted-foreground">{t.loading}</div>
+                  </Card>
+                )}
+                    {detailedPokemon && !isLoadingDetail && (
+                      <PokemonDetail
+                        pokemon={detailedPokemon}
+                        selectedGeneration={selectedGeneration}
+                        onClose={handleCloseDetail}
+                        onSelectPokemon={handleSelectPokemonById}
+                        onPokemonUpdate={(updatedPokemon) => {
+                          // 当形态切换时，更新父组件的 detailedPokemon
+                          setDetailedPokemon(updatedPokemon)
+                        }}
+                      />
+                    )}
+                <CatchCalculator pokemon={detailedPokemon} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="favorites" className="space-y-6">
+            <FavoritesList
+              onSelectPokemon={(pokemon) => {
+                setDetailedPokemon(pokemon)
+                setSelectedPokemonId(pokemon.id)
+                setActiveTab("pokedex") // Switch to pokedex tab to see details
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="compare" className="space-y-6">
+            <PokemonCompare
+              pokemon1={comparePokemon1}
+              pokemon2={comparePokemon2}
               pokemonList={pokemonList || []}
-              filters={filters}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onSelect={handleSelectPokemon}
-              selectedId={selectedPokemonId ?? undefined}
-              isLoading={isLoadingList}
-              statsMap={statsMap || undefined}
+              onSelectPokemon1={async (pokemon) => {
+                try {
+                  const detail = await fetchPokemonDetail(pokemon.id)
+                  setComparePokemon1(detail)
+                } catch (error) {
+                  console.error("Failed to load pokemon:", error)
+                }
+              }}
+              onSelectPokemon2={async (pokemon) => {
+                try {
+                  const detail = await fetchPokemonDetail(pokemon.id)
+                  setComparePokemon2(detail)
+                } catch (error) {
+                  console.error("Failed to load pokemon:", error)
+                }
+              }}
+              onClearPokemon1={() => setComparePokemon1(null)}
+              onClearPokemon2={() => setComparePokemon2(null)}
+              onClose={() => {
+                setComparePokemon1(null)
+                setComparePokemon2(null)
+              }}
             />
-          </div>
+          </TabsContent>
 
-          {/* Right panel - Detail & Calculator */}
-          <div className="space-y-6 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
-            {isLoadingDetail && (
-              <Card className="p-8">
-                <div className="text-center text-muted-foreground">{t.loading}</div>
-              </Card>
-            )}
-            {detailedPokemon && !isLoadingDetail && (
-              <PokemonDetail
-                pokemon={detailedPokemon}
-                selectedGeneration={selectedGeneration}
-                onClose={handleCloseDetail}
-                onSelectPokemon={handleSelectPokemonById}
-              />
-            )}
-            <CatchCalculator pokemon={detailedPokemon} />
-          </div>
-        </div>
+          <TabsContent value="team" className="space-y-6">
+            <TeamBuilder />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

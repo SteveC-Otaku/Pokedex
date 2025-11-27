@@ -103,6 +103,52 @@ export interface Translations {
   exportJSON: string
   exportCSV: string
   storedDataAvailable: string
+  
+  // Favorites
+  favorites: string
+  addToFavorites: string
+  removeFromFavorites: string
+  
+  // Compare
+  compare: string
+  selectPokemonToCompare: string
+  selectSecondPokemon: string
+  clearComparison: string
+  
+  // Team Builder
+  teamBuilder: string
+  addToTeam: string
+  removeFromTeam: string
+  teamCoverage: string
+  offensiveCoverage: string
+  defensiveCoverage: string
+  selectMoves: string
+  teamSlot: string
+  empty: string
+  typeCoverage: string
+  superEffective: string
+  notVeryEffective: string
+  noEffect: string
+  ability: string
+  selectAbility: string
+  effortValues: string
+  totalEVs: string
+  remainingEVs: string
+  form: string
+  selectForm: string
+  defaultForm: string
+  saveTeam: string
+  loadTeam: string
+  deleteTeam: string
+  teamName: string
+  enterTeamName: string
+  savedTeams: string
+  noSavedTeams: string
+  confirmDeleteTeam: string
+  teamSaved: string
+  teamLoaded: string
+  teamDeleted: string
+  renameTeam: string
 }
 
 export const translations: Record<Language, Translations> = {
@@ -190,6 +236,46 @@ export const translations: Record<Language, Translations> = {
     exportJSON: "导出为 JSON",
     exportCSV: "导出为 CSV",
     storedDataAvailable: "本地数据可用",
+    favorites: "收藏",
+    addToFavorites: "添加到收藏",
+    removeFromFavorites: "取消收藏",
+    compare: "对比",
+    selectPokemonToCompare: "选择要对比的宝可梦",
+    selectSecondPokemon: "选择第二只宝可梦",
+    clearComparison: "清除对比",
+    teamBuilder: "队伍构建器",
+    addToTeam: "添加到队伍",
+    removeFromTeam: "从队伍移除",
+    teamCoverage: "队伍覆盖",
+    offensiveCoverage: "打击面",
+    defensiveCoverage: "属性覆盖",
+    selectMoves: "选择招式",
+    teamSlot: "队伍位置",
+    empty: "空",
+    typeCoverage: "属性覆盖",
+    superEffective: "效果绝佳",
+    notVeryEffective: "效果不好",
+    noEffect: "无效",
+    ability: "特性",
+    selectAbility: "选择特性",
+    effortValues: "努力值",
+    totalEVs: "总努力值",
+    remainingEVs: "剩余",
+    form: "形态",
+    selectForm: "选择形态",
+    defaultForm: "默认形态",
+    saveTeam: "保存队伍",
+    loadTeam: "加载队伍",
+    deleteTeam: "删除队伍",
+    teamName: "队伍名称",
+    enterTeamName: "输入队伍名称",
+    savedTeams: "已保存的队伍",
+    noSavedTeams: "暂无保存的队伍",
+    confirmDeleteTeam: "确定要删除这个队伍吗？",
+    teamSaved: "队伍已保存",
+    teamLoaded: "队伍已加载",
+    teamDeleted: "队伍已删除",
+    renameTeam: "重命名队伍",
   },
   en: {
     loading: "Loading...",
@@ -275,6 +361,46 @@ export const translations: Record<Language, Translations> = {
     exportJSON: "Export as JSON",
     exportCSV: "Export as CSV",
     storedDataAvailable: "Stored data available",
+    favorites: "Favorites",
+    addToFavorites: "Add to Favorites",
+    removeFromFavorites: "Remove from Favorites",
+    compare: "Compare",
+    selectPokemonToCompare: "Select Pokémon to Compare",
+    selectSecondPokemon: "Select Second Pokémon",
+    clearComparison: "Clear Comparison",
+    teamBuilder: "Team Builder",
+    addToTeam: "Add to Team",
+    removeFromTeam: "Remove from Team",
+    teamCoverage: "Team Coverage",
+    offensiveCoverage: "Offensive Coverage",
+    defensiveCoverage: "Defensive Coverage",
+    selectMoves: "Select Moves",
+    teamSlot: "Team Slot",
+    empty: "Empty",
+    typeCoverage: "Type Coverage",
+    superEffective: "Super Effective",
+    notVeryEffective: "Not Very Effective",
+    noEffect: "No Effect",
+    ability: "Ability",
+    selectAbility: "Select Ability",
+    effortValues: "Effort Values",
+    totalEVs: "Total EVs",
+    remainingEVs: "Remaining",
+    form: "Form",
+    selectForm: "Select Form",
+    defaultForm: "Default Form",
+    saveTeam: "Save Team",
+    loadTeam: "Load Team",
+    deleteTeam: "Delete Team",
+    teamName: "Team Name",
+    enterTeamName: "Enter team name",
+    savedTeams: "Saved Teams",
+    noSavedTeams: "No saved teams",
+    confirmDeleteTeam: "Are you sure you want to delete this team?",
+    teamSaved: "Team saved",
+    teamLoaded: "Team loaded",
+    teamDeleted: "Team deleted",
+    renameTeam: "Rename Team",
   },
   ja: {
     loading: "読み込み中...",
@@ -360,6 +486,46 @@ export const translations: Record<Language, Translations> = {
     exportJSON: "JSONとしてエクスポート",
     exportCSV: "CSVとしてエクスポート",
     storedDataAvailable: "ローカルデータ利用可能",
+    favorites: "お気に入り",
+    addToFavorites: "お気に入りに追加",
+    removeFromFavorites: "お気に入りから削除",
+    compare: "比較",
+    selectPokemonToCompare: "比較するポケモンを選択",
+    selectSecondPokemon: "2匹目のポケモンを選択",
+    clearComparison: "比較をクリア",
+    teamBuilder: "チームビルダー",
+    addToTeam: "チームに追加",
+    removeFromTeam: "チームから削除",
+    teamCoverage: "チームカバレッジ",
+    offensiveCoverage: "攻撃カバレッジ",
+    defensiveCoverage: "防御カバレッジ",
+    selectMoves: "技を選択",
+    teamSlot: "チームスロット",
+    empty: "空",
+    typeCoverage: "タイプカバレッジ",
+    superEffective: "効果抜群",
+    notVeryEffective: "効果いまひとつ",
+    noEffect: "効果なし",
+    ability: "特性",
+    selectAbility: "特性を選択",
+    effortValues: "努力値",
+    totalEVs: "合計努力値",
+    remainingEVs: "残り",
+    form: "フォルム",
+    selectForm: "フォルムを選択",
+    defaultForm: "デフォルトフォルム",
+    saveTeam: "チームを保存",
+    loadTeam: "チームを読み込む",
+    deleteTeam: "チームを削除",
+    teamName: "チーム名",
+    enterTeamName: "チーム名を入力",
+    savedTeams: "保存されたチーム",
+    noSavedTeams: "保存されたチームはありません",
+    confirmDeleteTeam: "このチームを削除してもよろしいですか？",
+    teamSaved: "チームを保存しました",
+    teamLoaded: "チームを読み込みました",
+    teamDeleted: "チームを削除しました",
+    renameTeam: "チーム名を変更",
   },
 }
 
