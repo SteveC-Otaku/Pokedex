@@ -12,6 +12,11 @@ out/
 dist/
 build/
 
+# 开发脚本和文档（开发工具，用户不需要）
+scripts/
+!scripts/build-for-github-pages.ts  # 保留部署脚本
+README-DATA.md
+
 # GitHub Pages - docs 目录需要提交，所以不忽略
 # docs/
 
