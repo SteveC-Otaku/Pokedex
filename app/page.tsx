@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import useSWR from "swr"
 import { PokemonSearch } from "@/components/pokemon-search"
@@ -22,7 +22,7 @@ import { useLanguage } from "@/contexts/language-context"
 
 const VALID_TABS = ["pokedex", "favorites", "compare", "team", "type-calc"]
 
-export default function Pokedex() {
+function PokedexContent() {
   const { t } = useLanguage()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -325,5 +325,21 @@ export default function Pokedex() {
         </Tabs>
       </main>
     </div>
+  )
+}
+
+function PokedexFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  )
+}
+
+export default function Pokedex() {
+  return (
+    <Suspense fallback={<PokedexFallback />}>
+      <PokedexContent />
+    </Suspense>
   )
 }
