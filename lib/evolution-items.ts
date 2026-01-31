@@ -48,3 +48,9 @@ export function getEvolutionItemInfo(itemName: string | null | undefined): { nam
   return EVOLUTION_ITEMS[itemKey] || { nameZh: itemName.replace("-", " "), spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${itemKey}.png` }
 }
 
+
+
+
+
+
+

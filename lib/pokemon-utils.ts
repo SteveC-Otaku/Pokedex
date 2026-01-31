@@ -295,28 +295,28 @@ export function calculateAllCatchRates(
   return POKEBALL_MODIFIERS
     .filter((ball) => ball.name !== "Master Ball") // 排除大师球
     .map((ball) => {
-      let modifier = ball.baseModifier
+    let modifier = ball.baseModifier
 
-      // Apply active conditions
-      if (ball.conditions) {
-        for (const cond of ball.conditions) {
-          const condKey = `${ball.name}-${cond.name}`
-          if (activeConditions[condKey]) {
-            modifier = cond.modifier
-          }
+    // Apply active conditions
+    if (ball.conditions) {
+      for (const cond of ball.conditions) {
+        const condKey = `${ball.name}-${cond.name}`
+        if (activeConditions[condKey]) {
+          modifier = cond.modifier
         }
       }
+    }
 
-      const probability = calculateCatchRate(captureRate, maxHP, currentHP, modifier, statusModifier)
+    const probability = calculateCatchRate(captureRate, maxHP, currentHP, modifier, statusModifier)
 
-      return {
-        ballName: ball.name,
-        ballNameZh: ball.nameZh,
-        rate: captureRate,
-        probability,
-        modifier,
+    return {
+      ballName: ball.name,
+      ballNameZh: ball.nameZh,
+      rate: captureRate,
+      probability,
+      modifier,
         spriteUrl: ball.spriteUrl,
-      }
+    }
     })
     .sort((a, b) => b.probability - a.probability)
 }

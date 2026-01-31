@@ -154,11 +154,11 @@ export function PokemonSearch({ pokemonList, onSelect, isLoading }: PokemonSearc
                   <span className="font-medium truncate text-sm">{pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}</span>
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
-                  {pokemon.types.map((type) => (
-                    <span key={type} className={`type-${type} text-[10px] px-1 py-0.5 rounded text-white flex-shrink-0`}>
+                {pokemon.types.map((type) => (
+                    <span key={type} className={`type-${type} text-[10px] px-1 py-0.5 rounded font-medium flex-shrink-0`}>
                       {getTypeName(type, language)}
-                    </span>
-                  ))}
+                  </span>
+                ))}
                 </div>
               </div>
             </li>

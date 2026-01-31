@@ -36,12 +36,14 @@ export function FavoriteButton({ pokemonId, className, size = "md" }: FavoriteBu
         toggleFavorite(pokemonId)
       }}
       title={favorited ? "取消收藏" : "收藏"}
+      aria-label={favorited ? "取消收藏" : "收藏"}
     >
       <Heart
         className={cn(
           "h-full w-full",
           favorited ? "fill-current" : "fill-none",
         )}
+        aria-hidden
       />
     </Button>
   )

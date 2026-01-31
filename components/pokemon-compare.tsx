@@ -99,7 +99,7 @@ export function PokemonCompare({
                 </div>
                 <div className="flex gap-2 mt-1">
                   {pokemon.types.map((type) => (
-                    <span key={type} className={`type-${type} px-2 py-0.5 rounded-full text-white text-xs`}>
+                    <span key={type} className={`type-${type} px-2 py-0.5 rounded-full text-xs font-medium`}>
                       {getTypeName(type, language)}
                     </span>
                   ))}

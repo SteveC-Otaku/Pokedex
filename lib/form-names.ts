@@ -68,6 +68,14 @@ export const FORM_NAMES: { [key: string]: { zh: string; en: string; ja: string }
   "bug": { zh: "虫", en: "Bug", ja: "むし" },
   "poison": { zh: "毒", en: "Poison", ja: "どく" },
   "normal": { zh: "一般", en: "Normal", ja: "ノーマル" },
+  
+  // 武道熊师形态
+  "single-strike": { zh: "一击流", en: "Single Strike Style", ja: "いちげきりゅう" },
+  "rapid-strike": { zh: "连击流", en: "Rapid Strike Style", ja: "れんげきりゅう" },
+  
+  // 爱管侍形态
+  "male": { zh: "雄性", en: "Male", ja: "オス" },
+  "female": { zh: "雌性", en: "Female", ja: "メス" },
 }
 
 /**
@@ -101,4 +109,30 @@ export function getFormName(formName: string, language: "zh" | "en" | "ja" = "zh
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
 }
+
+/**
+ * 获取默认形态的显示名称
+ * 对于某些宝可梦，默认形态有特定的名称
+ */
+export function getDefaultFormName(pokemonId: number, language: "zh" | "en" | "ja" = "zh"): string {
+  // 武道熊师 (#892) 的默认形态是一击流
+  if (pokemonId === 892) {
+    return FORM_NAMES["single-strike"][language] || FORM_NAMES["single-strike"].zh
+  }
+  
+  // 爱管侍 (#876) 的默认形态是雄性
+  if (pokemonId === 876) {
+    return FORM_NAMES["male"][language] || FORM_NAMES["male"].zh
+  }
+  
+  // 其他宝可梦使用默认的"默认形态"翻译
+  // 这个函数返回空字符串，让调用者使用 t.defaultForm
+  return ""
+}
+
+
+
+
+
+
 

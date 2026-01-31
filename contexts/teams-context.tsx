@@ -7,7 +7,8 @@ const TEAMS_KEY = "pokedex-teams"
 export interface SavedTeamMember {
   pokemonId: number
   selectedForm: string | null
-  moveIds: (number | null)[]
+  moveTypes?: string[] // 招式属性（新版本）
+  moveIds?: (number | null)[] // 招式ID（旧版本，兼容用）
   ability: string | null
   evs: {
     hp: number
@@ -22,6 +23,7 @@ export interface SavedTeamMember {
 export interface SavedTeam {
   id: string
   name: string
+  generation: number // 队伍使用的世代
   members: SavedTeamMember[]
   createdAt: number
   updatedAt: number
@@ -29,7 +31,7 @@ export interface SavedTeam {
 
 interface TeamsContextType {
   teams: SavedTeam[]
-  saveTeam: (name: string, members: SavedTeamMember[]) => string
+  saveTeam: (name: string, members: SavedTeamMember[], generation?: number) => string
   loadTeam: (teamId: string) => SavedTeam | null
   deleteTeam: (teamId: string) => void
   updateTeamName: (teamId: string, newName: string) => void
@@ -65,11 +67,12 @@ export function TeamsProvider({ children }: { children: ReactNode }) {
     }
   }, [teams])
 
-  const saveTeam = useCallback((name: string, members: SavedTeamMember[]): string => {
+  const saveTeam = useCallback((name: string, members: SavedTeamMember[], generation: number = 9): string => {
     const teamId = `team-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const newTeam: SavedTeam = {
       id: teamId,
       name,
+      generation,
       members,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -116,4 +119,6 @@ export function useTeams() {
   }
   return context
 }
+
+
 

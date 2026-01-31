@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { FavoriteButton } from "./favorite-button"
 import { getEvolutionItemInfo } from "@/lib/evolution-items"
-import { getFormName } from "@/lib/form-names"
+import { getFormName, getDefaultFormName } from "@/lib/form-names"
 import {
   Select,
   SelectContent,
@@ -190,46 +190,86 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
   useEffect(() => {
     if (!pokemon) return
 
+    let isMounted = true
+
     const loadMoves = async () => {
       setIsLoadingMoves(true)
       try {
         const data = await fetchPokemonMoves(pokemon.id, selectedGeneration)
-        setMoves(data)
+        if (isMounted) {
+          setMoves(data)
+        }
       } catch (error) {
         console.error("Failed to load moves:", error)
+      } finally {
+        if (isMounted) {
+          setIsLoadingMoves(false)
+        }
       }
-      setIsLoadingMoves(false)
     }
 
     const loadLocations = async () => {
       setIsLoadingLocations(true)
       try {
         // 优先从本地数据加载（如果存在）
-        const fullData = await import("@/lib/pokemon-data-loader").then(m => m.loadPokemonFullDataFromFile())
+        const fullData = await import("@/lib/pokemon-data-loader").then(m => m.loadPokemonFullDataFromFile([pokemon.id]))
+        if (!isMounted) return
+        
         if (fullData && fullData[pokemon.id]) {
           // 保存 locationsChecked 到 pokemon 对象（用于显示判断）
           if (fullData[pokemon.id].locationsChecked !== undefined) {
             (pokemon as any).locationsChecked = fullData[pokemon.id].locationsChecked
           }
           if (fullData[pokemon.id].locations && fullData[pokemon.id].locations.length > 0) {
-            setLocations(fullData[pokemon.id].locations)
+            const locs = fullData[pokemon.id].locations || []
+            if (isMounted && typeof setLocations === 'function') {
+              setLocations(locs)
+            }
+          } else if (fullData[pokemon.id].locationsChecked === true) {
+            // 本地数据存在但 locations 为空且已检查过，说明确实没有出现地点
+            if (isMounted && typeof setLocations === 'function') {
+              setLocations([])
+            }
+            // 确保标记已检查
+            (pokemon as any).locationsChecked = true
           } else {
-            // 本地数据存在但 locations 为空，说明已检查过
-            setLocations([])
+            // 本地数据存在但未检查，继续从 API 获取
+            const data = await fetchPokemonLocations(pokemon.id)
+            if (!isMounted) return
+            const locs = Array.isArray(data) ? data : []
+            if (typeof setLocations === 'function') {
+              setLocations(locs)
+            }
+            // 标记为已检查
+            (pokemon as any).locationsChecked = true
           }
         } else {
           // 如果本地数据没有，从 API 获取
           const data = await fetchPokemonLocations(pokemon.id)
-          setLocations(data)
+          if (!isMounted) return
+          const locs = Array.isArray(data) ? data : []
+          if (typeof setLocations === 'function') {
+            setLocations(locs)
+          }
         }
       } catch (error) {
         console.error("Failed to load locations:", error)
+        if (isMounted && typeof setLocations === 'function') {
+          setLocations([])
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingLocations(false)
+        }
       }
-      setIsLoadingLocations(false)
     }
 
     loadMoves()
     loadLocations()
+
+    return () => {
+      isMounted = false
+    }
   }, [pokemon?.id, selectedGeneration])
 
   if (!pokemon) {
@@ -294,7 +334,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                 {evolutionDetails.location && (
                   <span className="text-[10px] text-center text-muted-foreground">
                     {evolutionDetails.location}
-                  </span>
+              </span>
                 )}
               </div>
             )}
@@ -307,7 +347,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
             node.id === pokemon.id ? "bg-primary/20 ring-2 ring-primary/30" : "hover:bg-secondary",
           )}
         >
-          <img src={node.sprite || "/placeholder.svg"} alt={node.name} className="w-12 h-12 pixelated" />
+          <img src={node.sprite || "/placeholder.svg"} alt={node.names[language] || node.names.zh || node.names.en || node.name} className="w-12 h-12 pixelated" />
           <span className="text-xs mt-1 text-center max-w-[80px]">{node.names[language] || node.names.zh || node.names.en || node.name}</span>
         </button>
         {node.evolvesTo.length > 0 && (
@@ -318,85 +358,82 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
   }
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="pokedex-detail-card relative overflow-hidden border-0 shadow-none">
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background transition-colors"
+        className="detail-close absolute top-4 right-4 z-10 p-2 rounded-full bg-white/60 dark:bg-white/10 border border-white/30 dark:border-white/10 backdrop-blur-md hover:bg-white/80 dark:hover:bg-white/20 transition-colors"
+        aria-label={t.close || "关闭"}
       >
         <X className="h-5 w-5" />
       </button>
 
-      <CardHeader className="pb-4">
-        <div className="flex items-start gap-6">
-          {/* Pokemon Image */}
-          <div className="relative flex-shrink-0">
-            <div className="relative w-40 h-40 rounded-2xl bg-gradient-to-br from-secondary to-background p-4">
-              <img
-                src={
-                  showShiny
-                    ? pokemon.sprites.artworkShiny || pokemon.sprites.frontShiny
-                    : pokemon.sprites.artwork || pokemon.sprites.front
-                }
-                alt={pokemon.name}
-                className="w-full h-full object-contain drop-shadow-lg"
-              />
-              <button
-                onClick={() => setShowShiny(!showShiny)}
-                className={cn(
-                  "absolute bottom-2 right-2 p-1.5 rounded-full transition-colors",
-                  showShiny ? "bg-yellow-500/30 text-yellow-400" : "bg-secondary hover:bg-secondary/80",
-                )}
-                title={showShiny ? t.showNormal : t.showShiny}
-              >
-                <Sparkles className="h-4 w-4" />
-              </button>
-            </div>
+      <CardHeader className="detail-hero pb-6 px-6 pt-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <div className="detail-image-wrap relative flex-shrink-0 w-36 h-36 sm:w-40 sm:h-40 rounded-2xl bg-white/50 dark:bg-white/8 border border-white/50 dark:border-white/10 backdrop-blur-xl p-4 flex items-center justify-center shadow-sm">
+            <img
+              src={
+                showShiny
+                  ? pokemon.sprites.artworkShiny || pokemon.sprites.frontShiny
+                  : pokemon.sprites.artwork || pokemon.sprites.front
+              }
+              alt={pokemon.name}
+              className="w-full h-full object-contain"
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowShiny(!showShiny); }}
+              className={cn(
+                "absolute bottom-2 right-2 p-1.5 rounded-full border border-white/30 backdrop-blur-sm transition-colors",
+                showShiny ? "bg-amber-400/30 text-amber-600 dark:text-amber-400" : "bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20",
+              )}
+              title={showShiny ? t.showNormal : t.showShiny}
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Basic Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-muted-foreground font-mono">#{pokemon.id.toString().padStart(3, "0")}</span>
-              <CardTitle className="text-2xl">{pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}</CardTitle>
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+              <span className="text-muted-foreground font-mono text-sm">#{pokemon.id.toString().padStart(3, "0")}</span>
+              <CardTitle className="text-xl sm:text-2xl font-semibold tracking-tight">{pokemon.names[language] || pokemon.names.zh || pokemon.names.en || pokemon.name}</CardTitle>
               <FavoriteButton pokemonId={pokemon.id} size="sm" />
             </div>
-            <div className="text-muted-foreground text-sm mb-3 capitalize">
-              {pokemon.name} · {pokemon.species.genera}
-            </div>
+            <p className="text-muted-foreground text-sm mb-3">{pokemon.species.genera}</p>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
               {pokemon.types.map((type) => (
-                <span key={type} className={`type-${type} px-3 py-1 rounded-full text-white text-sm font-medium`}>
+                <span key={type} className={`type-${type} px-2.5 py-1 rounded-lg text-xs font-medium shadow-sm`}>
                   {getTypeName(type, language)}
                 </span>
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">{t.height}: </span>
-                <span>{(pokemon.height / 10).toFixed(1)} m</span>
+            <dl className="detail-meta grid grid-cols-2 gap-x-5 gap-y-4 text-sm rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md px-4 py-3 min-w-0">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <dt className="text-muted-foreground text-xs font-medium">{t.height}</dt>
+                <dd className="font-medium break-words">{(pokemon.height / 10).toFixed(1)} m</dd>
               </div>
-              <div>
-                <span className="text-muted-foreground">{t.weight}: </span>
-                <span>{(pokemon.weight / 10).toFixed(1)} kg</span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <dt className="text-muted-foreground text-xs font-medium">{t.weight}</dt>
+                <dd className="font-medium break-words">{(pokemon.weight / 10).toFixed(1)} kg</dd>
               </div>
-              <div>
-                <span className="text-muted-foreground">{t.captureRate}: </span>
-                <span>{pokemon.species.captureRate}</span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <dt className="text-muted-foreground text-xs font-medium">{t.captureRate}</dt>
+                <dd className="font-medium break-words">{pokemon.species.captureRate}</dd>
               </div>
-              <div>
-                <span className="text-muted-foreground">{t.generation}: </span>
-                <span>{GENERATIONS.find((g) => g.id === pokemon.species.generation)?.names[language] || GENERATIONS.find((g) => g.id === pokemon.species.generation)?.names.zh}</span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <dt className="text-muted-foreground text-xs font-medium">{t.generation}</dt>
+                <dd className="font-medium break-words">
+                  {GENERATIONS.find((g) => g.id === pokemon.species.generation)?.names[language] || GENERATIONS.find((g) => g.id === pokemon.species.generation)?.names.zh}
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-6 pb-6 pt-0 space-y-6">
         <Tabs defaultValue="stats" className="w-full">
-          <TabsList className="grid grid-cols-6 mb-4">
+          <TabsList data-slot="tabs-list" className="detail-tabs grid grid-cols-3 sm:grid-cols-6 gap-1 mb-4 p-1.5 w-full">
             <TabsTrigger value="stats">{t.stats}</TabsTrigger>
             <TabsTrigger value="abilities">{t.abilities}</TabsTrigger>
             <TabsTrigger value="evolution">{t.evolution}</TabsTrigger>
@@ -405,25 +442,25 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
             <TabsTrigger value="locations">{t.locations}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="stats" className="space-y-3">
+          <TabsContent value="stats" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md p-4 space-y-3.5">
             {Object.entries(pokemon.stats)
               .filter(([key]) => key !== "total")
               .map(([key, value]) => (
                 <div key={key} className="flex items-center gap-3">
-                  <span className="w-16 text-sm text-muted-foreground">{STAT_NAMES[key]}</span>
-                  <span className="w-10 text-sm font-mono text-right">{value}</span>
-                  <Progress value={(value / 255) * 100} className={cn("flex-1 h-3 bg-secondary/50", STAT_COLORS[key])} />
+                  <span className="w-16 shrink-0 text-sm text-muted-foreground">{STAT_NAMES[key]}</span>
+                  <span className="w-10 shrink-0 text-sm font-mono font-medium text-foreground text-right">{value}</span>
+                  <Progress value={(value / 255) * 100} className={cn("flex-1 min-w-0 h-3 rounded-full bg-muted/80", STAT_COLORS[key])} />
                 </div>
               ))}
-            <div className="flex items-center gap-3 pt-2 border-t border-border">
-              <span className="w-16 text-sm font-medium">{t.total}</span>
-              <span className="w-10 text-sm font-mono font-bold text-right">{pokemon.stats.total}</span>
+            <div className="flex items-center gap-3 pt-3 mt-2 border-t border-border/80">
+              <span className="w-16 shrink-0 text-sm font-semibold text-foreground">{t.total}</span>
+              <span className="w-10 shrink-0 text-sm font-mono font-bold text-right text-foreground">{pokemon.stats.total}</span>
             </div>
           </TabsContent>
 
-          <TabsContent value="abilities" className="space-y-3">
+          <TabsContent value="abilities" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md p-4 space-y-3">
             {pokemon.abilities.map((ability) => (
-              <div key={ability.name} className="p-3 rounded-lg bg-secondary/30">
+              <div key={ability.name} className="p-3 rounded-xl bg-white/50 dark:bg-white/10 border border-border/60 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">{ability.names[language] || ability.names.zh || ability.names.en || ability.name}</span>
                   {ability.isHidden && (
@@ -437,16 +474,16 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
             ))}
           </TabsContent>
 
-          <TabsContent value="evolution">
-            <div className="flex items-center justify-center py-4 overflow-x-auto">
-              {pokemon.species.evolutionChain.map((node) => renderEvolutionChain(node))}
+          <TabsContent value="evolution" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md p-4">
+            <div className="flex items-center justify-center py-4 overflow-x-auto min-h-[120px]">
+              {(pokemon.species.evolutionChain || []).map((node) => renderEvolutionChain(node))}
             </div>
           </TabsContent>
 
-          <TabsContent value="type" className="space-y-4">
+          <TabsContent value="type" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md p-4 space-y-5">
             <div>
-              <h4 className="flex items-center gap-2 font-medium mb-3">
-                <Swords className="h-4 w-4 text-red-400" />
+              <h4 className="flex items-center gap-2 font-semibold text-foreground mb-3">
+                <Swords className="h-4 w-4 text-red-500 dark:text-red-400" />
                 {t.attackEffectiveness}
               </h4>
               <div className="flex flex-wrap gap-2">
@@ -454,59 +491,65 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                   .filter(([, mult]) => mult > 1)
                   .sort(([, a], [, b]) => b - a)
                   .map(([type, mult]) => (
-                    <Badge key={type} variant="secondary" className={`type-${type} text-white gap-1`}>
+                    <span key={type} className={`type-${type} inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium shadow-sm`}>
                       {getTypeName(type, language)} ×{mult}
-                    </Badge>
+                    </span>
                   ))}
               </div>
             </div>
             <div>
-              <h4 className="flex items-center gap-2 font-medium mb-3">
-                <Shield className="h-4 w-4 text-blue-400" />
+              <h4 className="flex items-center gap-2 font-semibold text-foreground mb-3">
+                <Shield className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                 {t.defenseEffectiveness}
               </h4>
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-sm text-muted-foreground w-20">{t.weaknesses}:</span>
-                  {Object.entries(typeEffectiveness.defending)
-                    .filter(([, mult]) => mult > 1)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([type, mult]) => (
-                      <Badge key={type} variant="destructive" className={`gap-1`}>
-                        <span className={`type-${type} w-2 h-2 rounded-full`} />
-                        {getTypeName(type, language)} ×{mult}
-                      </Badge>
-                    ))}
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground shrink-0 w-20">{t.weaknesses}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(typeEffectiveness.defending)
+                      .filter(([, mult]) => mult > 1)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([type, mult]) => (
+                        <span key={type} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/15 text-red-700 dark:text-red-300 border border-red-300/50 dark:border-red-500/30">
+                          <span className={`type-${type} w-2 h-2 rounded-full shrink-0 ring-1 ring-black/10`} />
+                          {getTypeName(type, language)} ×{mult}
+                        </span>
+                      ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-sm text-muted-foreground w-20">{t.resistances}:</span>
-                  {Object.entries(typeEffectiveness.defending)
-                    .filter(([, mult]) => mult < 1 && mult > 0)
-                    .sort(([, a], [, b]) => a - b)
-                    .map(([type, mult]) => (
-                      <Badge key={type} variant="secondary" className="gap-1 bg-green-500/20 text-green-400">
-                        <span className={`type-${type} w-2 h-2 rounded-full`} />
-                        {getTypeName(type, language)} ×{mult}
-                      </Badge>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground shrink-0 w-20">{t.resistances}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(typeEffectiveness.defending)
+                      .filter(([, mult]) => mult < 1 && mult > 0)
+                      .sort(([, a], [, b]) => a - b)
+                      .map(([type, mult]) => (
+                        <span key={type} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border border-emerald-300/50 dark:border-emerald-500/30">
+                          <span className={`type-${type} w-2 h-2 rounded-full shrink-0 ring-1 ring-black/10`} />
+                          {getTypeName(type, language)} ×{mult}
+                        </span>
+                      ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-sm text-muted-foreground w-20">{t.immunities}:</span>
-                  {Object.entries(typeEffectiveness.defending)
-                    .filter(([, mult]) => mult === 0)
-                    .map(([type]) => (
-                      <Badge key={type} variant="secondary" className="gap-1 bg-gray-500/20">
-                        <span className={`type-${type} w-2 h-2 rounded-full`} />
-                        {getTypeName(type, language)} ×0
-                      </Badge>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground shrink-0 w-20">{t.immunities}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(typeEffectiveness.defending)
+                      .filter(([, mult]) => mult === 0)
+                      .map(([type]) => (
+                        <span key={type} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border">
+                          <span className={`type-${type} w-2 h-2 rounded-full shrink-0 ring-1 ring-black/10`} />
+                          {getTypeName(type, language)} ×0
+                        </span>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="moves">
-            <ScrollArea className="h-80">
+          <TabsContent value="moves" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md overflow-hidden">
+            <ScrollArea className="h-80 p-4">
               {isLoadingMoves ? (
                 <div className="text-center py-8 text-muted-foreground">{t.loading}</div>
               ) : (
@@ -521,10 +564,10 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                         {levelUpMoves.map((move) => (
                           <div
                             key={`${move.id}-${move.levelLearnedAt}`}
-                            className="flex items-center gap-2 p-2 rounded bg-secondary/30 text-sm"
+                            className="flex items-center gap-2 p-2 rounded-lg bg-white/50 dark:bg-white/10 border border-border/40 text-sm text-foreground"
                           >
-                            <span className="w-12 text-muted-foreground">Lv.{move.levelLearnedAt}</span>
-                            <span className={`type-${move.type} w-2 h-2 rounded-full`} />
+                            <span className="w-12 shrink-0 text-muted-foreground">Lv.{move.levelLearnedAt}</span>
+                            <span className={`type-${move.type} w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/10`} />
                             <span className="flex-1">{move.names[language] || move.names.zh || move.names.en || move.name}</span>
                             <span className="text-muted-foreground">{move.power || "-"}</span>
                             <span className="text-muted-foreground">{move.accuracy || "-"}%</span>
@@ -538,8 +581,8 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                       <h4 className="font-medium mb-2">{t.tmMoves}</h4>
                       <div className="space-y-1">
                         {tmMoves.slice(0, 20).map((move) => (
-                          <div key={move.id} className="flex items-center gap-2 p-2 rounded bg-secondary/30 text-sm">
-                            <span className={`type-${move.type} w-2 h-2 rounded-full`} />
+                          <div key={move.id} className="flex items-center gap-2 p-2 rounded-lg bg-white/50 dark:bg-white/10 border border-border/40 text-sm text-foreground">
+                            <span className={`type-${move.type} w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-black/10`} />
                             <span className="flex-1">{move.names[language] || move.names.zh || move.names.en || move.name}</span>
                             <span className="text-muted-foreground">{move.power || "-"}</span>
                             <span className="text-muted-foreground">{move.accuracy || "-"}%</span>
@@ -558,8 +601,8 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="locations">
-            <ScrollArea className="h-80">
+          <TabsContent value="locations" className="detail-section rounded-xl bg-white/40 dark:bg-white/8 border border-white/40 dark:border-white/10 backdrop-blur-md overflow-hidden">
+            <ScrollArea className="h-80 p-4">
               {isLoadingLocations ? (
                 <div className="text-center py-8 text-muted-foreground">{t.loading}</div>
               ) : locations.length === 0 ? (
@@ -569,15 +612,28 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                     const isChecked = (pokemon as any).locationsChecked === true
                     
                     if (isChecked) {
+                      // 检查是否是第9世代（根据ID判断，因为数据源可能未更新）
+                      // 第9世代宝可梦ID范围：906-1025
+                      const isGen9 = pokemon.id >= 906 && pokemon.id <= 1025
+                      
+                      if (isGen9) {
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-muted-foreground">{t.waitingForDataSource}</p>
+                            <p className="text-xs text-muted-foreground">（数据源尚未包含第9世代的出现地点数据）</p>
+                          </div>
+                        )
+                      }
+                      
+                      // 已检查但没有出现地点
                       return (
                         <div className="space-y-2">
-                          <p className="text-muted-foreground">{t.noWildLocations || "该宝可梦在野外无出现地点"}</p>
-                          <p className="text-xs text-muted-foreground">（可能是传说/神话宝可梦或特殊获得方式）</p>
+                          <p className="text-muted-foreground">{t.noWildLocations}</p>
                         </div>
                       )
                     } else {
                       return (
-                        <div className="space-y-2">
+                <div className="space-y-2">
                           <p className="text-muted-foreground">{t.locationsNotLoaded || "出现地点数据未加载"}</p>
                           <p className="text-xs text-muted-foreground">（正在从 API 获取数据...）</p>
                         </div>
@@ -615,17 +671,17 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                                 key={i}
                                 className="flex items-center justify-between p-2 rounded bg-secondary/30 text-sm"
                               >
-                                <div>
+                      <div>
                                   <span>{loc.names.zh || loc.names[language] || loc.names.en || loc.name}</span>
                                   <span className="text-muted-foreground ml-2">
                                     ({getGameName(loc.game, language)})
                                   </span>
-                                </div>
-                                <div className="text-muted-foreground">
-                                  Lv.{loc.minLevel}-{loc.maxLevel} · {loc.chance}%
-                                </div>
-                              </div>
-                            ))}
+                      </div>
+                      <div className="text-muted-foreground">
+                        Lv.{loc.minLevel}-{loc.maxLevel} · {loc.chance}%
+                      </div>
+                    </div>
+                  ))}
                           </div>
                         </div>
                       )
@@ -639,7 +695,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
 
         {/* 形态切换 */}
         {pokemon.forms && pokemon.forms.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-border">
+          <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium">{t.form}</h4>
               <Select
@@ -658,7 +714,12 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                         alt="默认"
                         className="w-6 h-6 object-contain"
                       />
-                      <span>{t.defaultForm}</span>
+                      <span>
+                        {(() => {
+                          const defaultFormName = getDefaultFormName(pokemon.id, language)
+                          return defaultFormName || t.defaultForm
+                        })()}
+                      </span>
                     </div>
                   </SelectItem>
                   {pokemon.forms.map((form) => (
@@ -675,7 +736,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                             {form.types.map((type) => (
                               <span
                                 key={type}
-                                className={`type-${type} text-[8px] px-1 py-0.5 rounded text-white`}
+                                className={`type-${type} text-[8px] px-1 py-0.5 rounded font-medium`}
                               >
                                 {getTypeName(type, language)}
                               </span>
@@ -693,17 +754,17 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
 
         {/* All Sprites */}
         {(pokemon.sprites.frontFemale || pokemon.forms.length > 0) && (
-          <div className="mt-6 pt-4 border-t border-border">
-            <h4 className="font-medium mb-3">{t.allForms}</h4>
+          <div className="pt-4 border-t border-border">
+            <h4 className="font-semibold text-foreground mb-3">{t.allForms}</h4>
             <div className="flex flex-wrap gap-4">
               <div className="text-center">
-                <img src={pokemon.sprites.front || "/placeholder.svg"} alt="Normal" className="w-16 h-16 pixelated" />
+                <img src={pokemon.sprites.front || "/placeholder.svg"} alt={t.normal} className="w-16 h-16 pixelated" />
                 <span className="text-xs text-muted-foreground">{t.normal}</span>
               </div>
               <div className="text-center">
                 <img
                   src={pokemon.sprites.frontShiny || "/placeholder.svg"}
-                  alt="Shiny"
+                  alt={t.shiny}
                   className="w-16 h-16 pixelated"
                 />
                 <span className="text-xs text-muted-foreground">{t.shiny}</span>
@@ -713,7 +774,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                   <div className="text-center">
                     <img
                       src={pokemon.sprites.frontFemale || "/placeholder.svg"}
-                      alt="Female"
+                      alt={t.female}
                       className="w-16 h-16 pixelated"
                     />
                     <span className="text-xs text-muted-foreground">{t.female}</span>
@@ -722,7 +783,7 @@ export function PokemonDetail({ pokemon: initialPokemon, selectedGeneration, onC
                     <div className="text-center">
                       <img
                         src={pokemon.sprites.frontShinyFemale || "/placeholder.svg"}
-                        alt="Shiny Female"
+                        alt={t.shinyFemale}
                         className="w-16 h-16 pixelated"
                       />
                       <span className="text-xs text-muted-foreground">{t.shinyFemale}</span>

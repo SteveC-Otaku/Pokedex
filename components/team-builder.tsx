@@ -23,10 +23,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { Pokemon, Move } from "@/lib/pokemon-types"
+import type { Pokemon } from "@/lib/pokemon-types"
 import { POKEMON_TYPES, getTypeName } from "@/lib/pokemon-types"
 import { getTypeEffectiveness } from "@/lib/pokemon-utils"
-import { fetchPokemonDetail, fetchPokemonMoves } from "@/lib/pokemon-api"
+import { fetchPokemonDetail } from "@/lib/pokemon-api"
 import { fetchPokemonBasicList } from "@/lib/pokemon-api"
 import { fetchPokemonFormData } from "@/lib/pokemon-form-api"
 import { useLanguage } from "@/contexts/language-context"
@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils"
 interface TeamMember {
   pokemon: Pokemon | null
   selectedForm: string | null // 选择的形态名称（null 表示默认形态）
-  moves: (Move | null)[]
+  moveTypes: string[] // 选择的招式属性（多选）
   ability: string | null // 选择的特性
   evs: {
     hp: number
@@ -47,6 +47,13 @@ interface TeamMember {
     specialDefense: number
     speed: number
   }
+}
+
+interface SavedTeam {
+  id: string
+  name: string
+  generation: number // 队伍使用的世代
+  members: SavedTeamMember[]
 }
 
 const TYPE_CHART: { [attacker: string]: { [defender: string]: number } } = {
@@ -107,13 +114,14 @@ const TYPE_CHART: { [attacker: string]: { [defender: string]: number } } = {
 export function TeamBuilder() {
   const { t, language } = useLanguage()
   const { teams, saveTeam, loadTeam, deleteTeam, updateTeamName } = useTeams()
+  const [teamGeneration, setTeamGeneration] = useState<number>(9) // 队伍使用的世代
   const [team, setTeam] = useState<TeamMember[]>([
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
-    { pokemon: null, selectedForm: null, moves: [null, null, null, null], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
+    { pokemon: null, selectedForm: null, moveTypes: [], ability: null, evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 } },
   ])
   const [selectingSlot, setSelectingSlot] = useState<number | null>(null)
   const [pokemonList, setPokemonList] = useState<any[]>([])
@@ -147,7 +155,7 @@ export function TeamBuilder() {
       newTeam[slotIndex] = {
         pokemon,
         selectedForm: null, // 默认形态
-        moves: [null, null, null, null],
+        moveTypes: [],
         ability: pokemon.abilities[0]?.name || null, // 默认选择第一个特性
         evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 },
       }
@@ -172,7 +180,7 @@ export function TeamBuilder() {
         newTeam[slotIndex] = {
           pokemon,
           selectedForm: null,
-          moves: [null, null, null, null],
+          moveTypes: [],
           ability: pokemon.abilities[0]?.name || null,
           evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 },
         }
@@ -206,7 +214,7 @@ export function TeamBuilder() {
         pokemon: updatedPokemon,
         selectedForm: formName,
         ability: formData.abilities[0]?.name || null, // 重新选择第一个特性
-        moves: [null, null, null, null], // 清空招式，因为形态可能不同
+        moveTypes: [], // 清空招式属性，因为形态可能不同
         evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 }, // 重置努力值
       }
       setTeam(newTeam)
@@ -226,7 +234,7 @@ export function TeamBuilder() {
     newTeam[slotIndex] = { 
       pokemon: null,
       selectedForm: null,
-      moves: [null, null, null, null],
+      moveTypes: [],
       ability: null,
       evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 }
     }
@@ -275,26 +283,14 @@ export function TeamBuilder() {
     })
   }, [pokemonList, searchQuery])
 
-  const handleSelectMove = async (slotIndex: number, moveIndex: number, moveId: number) => {
-    const member = team[slotIndex]
-    if (!member.pokemon) return
-
-    try {
-      const moves = await fetchPokemonMoves(member.pokemon.id)
-      const move = moves.find((m) => m.id === moveId)
-      if (!move) return
-
-      const newTeam = [...team]
-      newTeam[slotIndex].moves[moveIndex] = move
-      setTeam(newTeam)
-    } catch (error) {
-      console.error("Failed to load moves:", error)
-    }
-  }
-
-  const handleRemoveMove = (slotIndex: number, moveIndex: number) => {
+  const handleToggleMoveType = (slotIndex: number, moveType: string) => {
     const newTeam = [...team]
-    newTeam[slotIndex].moves[moveIndex] = null
+    const currentTypes = newTeam[slotIndex].moveTypes
+    if (currentTypes.includes(moveType)) {
+      newTeam[slotIndex].moveTypes = currentTypes.filter(t => t !== moveType)
+    } else {
+      newTeam[slotIndex].moveTypes = [...currentTypes, moveType]
+    }
     setTeam(newTeam)
   }
 
@@ -307,14 +303,15 @@ export function TeamBuilder() {
     // Collect all move types from team
     team.forEach((member) => {
       if (member.pokemon) {
-        // Add pokemon types for defensive coverage
-        member.pokemon.types.forEach((type) => defensiveTypes.add(type))
+        // Add pokemon types for defensive coverage (考虑形态)
+        const pokemonTypes = member.selectedForm && member.pokemon.forms
+          ? member.pokemon.forms.find(f => f.name === member.selectedForm)?.types || member.pokemon.types
+          : member.pokemon.types
+        pokemonTypes.forEach((type) => defensiveTypes.add(type))
 
         // Add move types for offensive coverage
-        member.moves.forEach((move) => {
-          if (move && move.type) {
-            offensiveTypes.add(move.type)
-          }
+        member.moveTypes.forEach((type) => {
+          offensiveTypes.add(type)
         })
       }
     })
@@ -356,12 +353,12 @@ export function TeamBuilder() {
     const savedMembers: SavedTeamMember[] = team.map((member) => ({
       pokemonId: member.pokemon?.id || 0,
       selectedForm: member.selectedForm,
-      moveIds: member.moves.map((move) => move?.id || null),
+      moveTypes: member.moveTypes,
       ability: member.ability,
       evs: member.evs,
     }))
     
-    saveTeam(teamName.trim(), savedMembers)
+    saveTeam(teamName.trim(), savedMembers, teamGeneration)
     setShowSaveDialog(false)
     setTeamName("")
     alert(t.teamSaved)
@@ -378,7 +375,7 @@ export function TeamBuilder() {
           return {
             pokemon: null,
             selectedForm: null,
-            moves: [null, null, null, null],
+            moveTypes: [],
             ability: null,
             evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 },
           }
@@ -401,23 +398,13 @@ export function TeamBuilder() {
             }
           }
 
-          // 加载招式
-          const moves = await Promise.all(
-            savedMember.moveIds.map(async (moveId) => {
-              if (!moveId) return null
-              try {
-                const allMoves = await fetchPokemonMoves(pokemon.id)
-                return allMoves.find((m) => m.id === moveId) || null
-              } catch {
-                return null
-              }
-            })
-          )
+          // 使用新的 moveTypes 或兼容旧的 moveIds（转换为空数组）
+          const moveTypes = savedMember.moveTypes || []
 
           return {
             pokemon,
             selectedForm: savedMember.selectedForm,
-            moves,
+            moveTypes,
             ability: savedMember.ability,
             evs: savedMember.evs,
           }
@@ -426,7 +413,7 @@ export function TeamBuilder() {
           return {
             pokemon: null,
             selectedForm: null,
-            moves: [null, null, null, null],
+            moveTypes: [],
             ability: null,
             evs: { hp: 0, attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0 },
           }
@@ -484,6 +471,26 @@ export function TeamBuilder() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* 世代选择 */}
+        <div className="flex items-center gap-2 pb-2 border-b border-border">
+          <Label className="text-sm font-medium">{t.generation}:</Label>
+          <Select
+            value={teamGeneration.toString()}
+            onValueChange={(value) => setTeamGeneration(Number.parseInt(value))}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((gen) => (
+                <SelectItem key={gen} value={gen.toString()}>
+                  {t.generation} {gen}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
         {/* Team Slots */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {team.map((member, slotIndex) => (
@@ -525,7 +532,7 @@ export function TeamBuilder() {
                           {member.pokemon.types.map((type) => (
                             <span
                               key={type}
-                              className={`type-${type} text-[10px] px-1 py-0.5 rounded text-white`}
+                              className={`type-${type} text-[10px] px-1 py-0.5 rounded font-medium`}
                             >
                               {getTypeName(type, language)}
                             </span>
@@ -571,7 +578,7 @@ export function TeamBuilder() {
                                       {form.types.map((type) => (
                                         <span
                                           key={type}
-                                          className={`type-${type} text-[8px] px-1 py-0.5 rounded text-white`}
+                                          className={`type-${type} text-[8px] px-1 py-0.5 rounded font-medium`}
                                         >
                                           {getTypeName(type, language)}
                                         </span>
@@ -648,40 +655,48 @@ export function TeamBuilder() {
                       </div>
                     </div>
 
-                    {/* 招式选择 */}
-                    <div className="space-y-1 pt-2 border-t border-border">
-                      <Label className="text-xs">{t.selectMoves}</Label>
-                      {member.moves.map((move, moveIndex) => (
-                        <div key={moveIndex} className="flex items-center gap-1">
-                          <Select
-                            value={move?.id.toString() || ""}
-                            onValueChange={(value) => {
-                              handleSelectMove(slotIndex, moveIndex, Number.parseInt(value))
-                            }}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue placeholder={`${t.selectMoves} ${moveIndex + 1}`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <ScrollArea className="h-60">
-                                {member.pokemon && (
-                                  <PokemonMoveList pokemonId={member.pokemon.id} />
-                                )}
-                              </ScrollArea>
-                            </SelectContent>
-                          </Select>
-                          {move && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => handleRemoveMove(slotIndex, moveIndex)}
+                    {/* 招式属性选择 */}
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <Label className="text-xs">{t.selectMoveTypes || "选择招式属性（可多选）"}</Label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {POKEMON_TYPES.map((type) => {
+                          const isSelected = member.moveTypes.includes(type)
+                          return (
+                            <button
+                              key={type}
+                              type="button"
+                              onClick={() => handleToggleMoveType(slotIndex, type)}
+                              className={`
+                                relative flex items-center justify-center px-1.5 py-1 rounded text-[10px] font-medium
+                                transition-all duration-200
+                                type-${type}
+                                ${isSelected 
+                                  ? 'shadow-md scale-105 ring-2 ring-white/50' 
+                                  : 'ring-1 ring-white/20 hover:ring-white/40'
+                                }
+                              `}
                             >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
+                              <span>{getTypeName(type, language)}</span>
+                              {isSelected && (
+                                <span className="absolute top-0 right-0 text-[8px] font-bold">✓</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {member.moveTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {member.moveTypes.map((type) => (
+                            <Badge
+                              key={type}
+                              variant="secondary"
+                              className={`type-${type} text-[10px] px-1.5 py-0.5 font-medium`}
+                            >
+                              {getTypeName(type, language)}
+                            </Badge>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </>
                 ) : (
@@ -769,7 +784,7 @@ export function TeamBuilder() {
                     <Badge
                       key={type}
                       variant={multiplier >= 2 ? "default" : "secondary"}
-                      className={`type-${type} text-white`}
+                      className={`type-${type} font-medium`}
                     >
                       {getTypeName(type, language)} ×{multiplier}
                     </Badge>
@@ -922,78 +937,4 @@ export function TeamBuilder() {
   )
 }
 
-function PokemonMoveList({ pokemonId }: { pokemonId: number }) {
-  const { t, language } = useLanguage()
-  const [moves, setMoves] = useState<Move[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const loadMoves = async () => {
-      setIsLoading(true)
-      try {
-        // 不传 generation 参数，获取所有世代的招式（包括蛋招式、学习机等）
-        const data = await fetchPokemonMoves(pokemonId)
-        setMoves(data)
-      } catch (error) {
-        console.error("Failed to load moves:", error)
-      }
-      setIsLoading(false)
-    }
-    loadMoves()
-  }, [pokemonId])
-
-  if (isLoading) {
-    return <div className="text-center py-4 text-muted-foreground">{t.loading}</div>
-  }
-
-  // 按学习方式分组
-  const movesByMethod: { [key: string]: Move[] } = {
-    "level-up": [],
-    "machine": [],
-    "tutor": [],
-    "egg": [],
-    "other": [],
-  }
-
-  moves.forEach((move) => {
-    const method = move.learnMethod
-    if (movesByMethod[method]) {
-      movesByMethod[method].push(move)
-    } else {
-      movesByMethod.other.push(move)
-    }
-  })
-
-  const methodLabels: { [key: string]: string } = {
-    "level-up": t.levelUpMoves,
-    "machine": t.tmMoves,
-    "tutor": "教学",
-    "egg": "蛋招式",
-    "other": "其他",
-  }
-
-  return (
-    <>
-      {Object.entries(movesByMethod).map(([method, methodMoves]) => {
-        if (methodMoves.length === 0) return null
-        return (
-          <div key={method}>
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground sticky top-0 bg-popover">
-              {methodLabels[method] || method}
-            </div>
-            {methodMoves.map((move) => (
-              <SelectItem key={move.id} value={move.id.toString()}>
-                <div className="flex items-center gap-2">
-                  <span className={`type-${move.type} w-2 h-2 rounded-full`} />
-                  <span className="flex-1">{move.names[language] || move.names.zh || move.names.en || move.name}</span>
-                  {move.power && <span className="text-xs text-muted-foreground">{move.power}</span>}
-                </div>
-              </SelectItem>
-            ))}
-          </div>
-        )
-      })}
-    </>
-  )
-}
 

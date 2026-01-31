@@ -10,6 +10,8 @@ export interface Pokemon {
   height: number
   weight: number
   forms: PokemonForm[]
+  movesByGeneration?: { [generation: number]: Move[] } // 按世代分组的招式
+  locations?: Location[] // 出现地点
 }
 
 export interface Ability {

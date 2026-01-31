@@ -125,12 +125,21 @@ export function FavoritesList({ onSelectPokemon }: FavoritesListProps) {
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {favoritePokemon.map((pokemon) => (
-            <button
+            <div
               key={pokemon.id}
               onClick={() => onSelectPokemon(pokemon)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  onSelectPokemon(pokemon)
+                }
+              }}
               className={cn(
-                "group relative aspect-square rounded-xl bg-card border border-border/50 p-2 transition-all duration-200",
+                "group relative aspect-square rounded-xl bg-card border border-border/50 p-2 transition-all duration-200 cursor-pointer",
                 "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:scale-105",
+                "focus:outline-none focus:ring-2 focus:ring-primary/50",
               )}
             >
               <div className="absolute top-2 left-2 text-xs font-mono text-muted-foreground">
@@ -162,14 +171,14 @@ export function FavoritesList({ onSelectPokemon }: FavoritesListProps) {
                   </div>
                   <div className="flex justify-center gap-1 mt-1">
                     {pokemon.types.map((type) => (
-                      <span key={type} className={`type-${type} text-[10px] px-1.5 py-0.5 rounded text-white`}>
+                      <span key={type} className={`type-${type} text-[10px] px-1.5 py-0.5 rounded font-medium`}>
                         {getTypeName(type, language)}
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </CardContent>

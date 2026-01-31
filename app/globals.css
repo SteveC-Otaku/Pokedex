@@ -3,76 +3,226 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Light theme (default) */
+/* 简约 / 宝可梦风格配色 + 毛玻璃（Apple 风） */
 :root {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.15 0 0);
+  --background: oklch(0.97 0.005 260);
+  --foreground: oklch(0.2 0.02 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0 0);
+  --card-foreground: oklch(0.2 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.65 0.2 25);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.15 0 0);
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.55 0.15 200);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.95 0 0);
-  --ring: oklch(0.65 0.2 25);
-  --chart-1: oklch(0.65 0.2 25);
-  --chart-2: oklch(0.55 0.15 200);
+  --popover-foreground: oklch(0.2 0 0);
+  --primary: oklch(0.5 0.18 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.01 260);
+  --secondary-foreground: oklch(0.25 0 0);
+  --muted: oklch(0.95 0.01 260);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.92 0.02 260);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.01 260);
+  --input: oklch(0.94 0.01 260);
+  --ring: oklch(0.5 0.18 250);
+  --chart-1: oklch(0.55 0.2 25);
+  --chart-2: oklch(0.5 0.18 250);
   --chart-3: oklch(0.6 0.18 140);
-  --chart-4: oklch(0.7 0.15 60);
+  --chart-4: oklch(0.65 0.15 60);
   --chart-5: oklch(0.55 0.2 300);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.65 0.2 25);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0 0);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.9 0 0);
-  --sidebar-ring: oklch(0.65 0.2 25);
+  --radius: 1rem;
+  --sidebar: oklch(0.97 0.005 260);
+  --sidebar-foreground: oklch(0.2 0 0);
+  --sidebar-primary: oklch(0.5 0.18 250);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.01 260);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.9 0.01 260);
+  --sidebar-ring: oklch(0.5 0.18 250);
 }
 
 .dark {
-  --background: oklch(0.13 0.01 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.18 0.01 260);
+  --background: oklch(0.14 0.02 260);
+  --foreground: oklch(0.95 0.01 0);
+  --card: oklch(0.18 0.02 260);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0.01 260);
+  --popover: oklch(0.18 0.02 260);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.2 25);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.25 0.01 260);
+  --primary: oklch(0.55 0.2 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.22 0.02 260);
   --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.22 0.01 260);
+  --muted: oklch(0.22 0.02 260);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.55 0.15 200);
-  --accent-foreground: oklch(1 0 0);
+  --accent: oklch(0.25 0.02 260);
+  --accent-foreground: oklch(0.95 0 0);
   --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.28 0.01 260);
-  --input: oklch(0.22 0.01 260);
-  --ring: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.28 0.02 260);
+  --input: oklch(0.22 0.02 260);
+  --ring: oklch(0.55 0.2 250);
   --chart-1: oklch(0.65 0.2 25);
-  --chart-2: oklch(0.55 0.15 200);
+  --chart-2: oklch(0.55 0.18 250);
   --chart-3: oklch(0.6 0.18 140);
   --chart-4: oklch(0.7 0.15 60);
   --chart-5: oklch(0.55 0.2 300);
-  --sidebar: oklch(0.15 0.01 260);
+  --sidebar: oklch(0.15 0.02 260);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.2 25);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.22 0.01 260);
+  --sidebar-primary: oklch(0.55 0.2 250);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.22 0.02 260);
   --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.28 0.01 260);
-  --sidebar-ring: oklch(0.65 0.2 25);
+  --sidebar-border: oklch(0.28 0.02 260);
+  --sidebar-ring: oklch(0.55 0.2 250);
+}
+
+/* ========== 游戏/图鉴风格：毛玻璃 + 适度霓虹强调 ========== */
+
+.pokedex-root {
+  background: linear-gradient(165deg, oklch(0.96 0.015 260) 0%, oklch(0.94 0.02 255) 100%);
+}
+.dark .pokedex-root {
+  background: linear-gradient(165deg, oklch(0.12 0.03 260) 0%, oklch(0.10 0.035 250) 100%);
+}
+
+.pokedex-header {
+  background: oklch(1 0 0 / 0.65);
+  border-color: oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+.dark .pokedex-header {
+  background: oklch(0.18 0.02 260 / 0.7);
+  border-color: oklch(1 0 0 / 0.08);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.pokedex-tabs-list {
+  background: oklch(1 0 0 / 0.5);
+  border: 1px solid oklch(1 0 0 / 0.15);
+  border-radius: 1rem;
+  padding: 0.25rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 1.5rem;
+}
+.dark .pokedex-tabs-list {
+  background: oklch(0.22 0.02 260 / 0.6);
+  border-color: oklch(1 0 0 / 0.08);
+}
+.pokedex-tabs-trigger {
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.pokedex-tabs-trigger[data-state="active"] {
+  background: oklch(1 0 0 / 0.85);
+  color: var(--foreground);
+  border: 1px solid oklch(1 0 0 / 0.2);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.06), 0 0 12px oklch(0.5 0.18 250 / 0.15);
+}
+.dark .pokedex-tabs-trigger[data-state="active"] {
+  background: oklch(0.32 0.04 260 / 0.9);
+  border-color: oklch(0.55 0.2 250 / 0.4);
+  box-shadow: 0 0 16px oklch(0.55 0.2 250 / 0.25);
+}
+
+.pokedex-content-grid {
+  gap: 1.5rem;
+}
+
+.pokedex-grid-item {
+  background: oklch(1 0 0 / 0.55);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.pokedex-grid-item:hover {
+  background: oklch(1 0 0 / 0.75);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.08), 0 0 0 1px oklch(1 0 0 / 0.2), 0 0 20px oklch(0.5 0.18 250 / 0.12);
+  transform: scale(1.02);
+}
+.dark .pokedex-grid-item {
+  background: oklch(0.2 0.025 260 / 0.6);
+  border-color: oklch(1 0 0 / 0.08);
+}
+.dark .pokedex-grid-item:hover {
+  background: oklch(0.26 0.04 260 / 0.85);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.25), 0 0 24px oklch(0.55 0.2 250 / 0.2);
+}
+
+.pokedex-filters button[data-slot="button"] {
+  background: oklch(1 0 0 / 0.5);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  backdrop-filter: blur(8px);
+}
+.dark .pokedex-filters button[data-slot="button"] {
+  background: oklch(0.24 0.02 260 / 0.6);
+  border-color: oklch(1 0 0 / 0.08);
+}
+
+.pokedex-panel-right [data-slot="card"],
+.pokedex-detail-card {
+  background: oklch(1 0 0 / 0.5);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 4px 24px oklch(0 0 0 / 0.06), 0 0 0 1px oklch(1 0 0 / 0.06);
+}
+.dark .pokedex-panel-right [data-slot="card"],
+.dark .pokedex-detail-card {
+  background: oklch(0.18 0.02 260 / 0.75);
+  border-color: oklch(1 0 0 / 0.08);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 0.2);
+}
+
+.pokedex-detail-card [data-slot="tabs-list"] {
+  background: oklch(1 0 0 / 0.4);
+  border: 1px solid oklch(1 0 0 / 0.15);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.dark .pokedex-detail-card [data-slot="tabs-list"] {
+  background: oklch(0.24 0.02 260 / 0.6);
+  border-color: oklch(1 0 0 / 0.08);
+}
+
+.pokedex-detail-card .detail-section {
+  transition: background 0.2s, border-color 0.2s;
+}
+
+/* 仅选中的宝可梦卡片：聚光灯/灯箱（中心亮、边缘略暗 + 外圈光晕） */
+.pokedex-grid-item[data-selected="true"] {
+  box-shadow:
+    0 0 24px rgba(255, 255, 255, 0.2),
+    0 0 48px rgba(255, 255, 255, 0.08),
+    0 8px 24px oklch(0 0 0 / 0.08);
+}
+.dark .pokedex-grid-item[data-selected="true"] {
+  box-shadow:
+    0 0 28px oklch(0.55 0.2 250 / 0.2),
+    0 0 56px oklch(0.55 0.2 250 / 0.1),
+    0 8px 24px oklch(0 0 0 / 0.25);
+}
+.pokedex-grid-item[data-selected="true"] .pokedex-grid-item-spotlight {
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 35%,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 75%
+  );
+}
+.dark .pokedex-grid-item[data-selected="true"] .pokedex-grid-item-spotlight {
+  background: radial-gradient(
+    ellipse 88% 78% at 50% 32%,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 72%
+  );
 }
 
 @theme inline {
@@ -117,6 +267,21 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -125,60 +290,78 @@
   }
 }
 
-/* <CHANGE> Pokémon type colors */
+/* Pokémon 属性颜色：深色背景用白字，浅色背景用深字以保证可读性 */
 .type-normal {
   background: #a8a878;
+  color: #1c1917;
 }
 .type-fire {
-  background: #f08030;
+  background: #c73e0a;
+  color: #fff;
 }
 .type-water {
-  background: #6890f0;
+  background: #3d5aa6;
+  color: #fff;
 }
 .type-electric {
-  background: #f8d030;
+  background: #e5c21a;
+  color: #1c1917;
 }
 .type-grass {
-  background: #78c850;
+  background: #5a9b2e;
+  color: #fff;
 }
 .type-ice {
-  background: #98d8d8;
+  background: #6eb4b4;
+  color: #1c1917;
 }
 .type-fighting {
-  background: #c03028;
+  background: #9b2d23;
+  color: #fff;
 }
 .type-poison {
-  background: #a040a0;
+  background: #7c3f8c;
+  color: #fff;
 }
 .type-ground {
-  background: #e0c068;
+  background: #c4a04a;
+  color: #1c1917;
 }
 .type-flying {
-  background: #a890f0;
+  background: #7c5eb8;
+  color: #fff;
 }
 .type-psychic {
-  background: #f85888;
+  background: #d63a5c;
+  color: #fff;
 }
 .type-bug {
-  background: #a8b820;
+  background: #7d8c1e;
+  color: #fff;
 }
 .type-rock {
-  background: #b8a038;
+  background: #8f7822;
+  color: #fff;
 }
 .type-ghost {
-  background: #705898;
+  background: #4d3a6b;
+  color: #fff;
 }
 .type-dragon {
-  background: #7038f8;
+  background: #5a2bb8;
+  color: #fff;
 }
 .type-dark {
-  background: #705848;
+  background: #4a3c34;
+  color: #fff;
 }
 .type-steel {
-  background: #b8b8d0;
+  background: #8888a8;
+  color: #fff;
 }
 .type-fairy {
-  background: #ee99ac;
+  background: #d8728e;
+  color: #fff;
 }
 
 /* Custom scrollbar - Light theme */

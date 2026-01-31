@@ -11,7 +11,6 @@ import type {
   Species,
 } from "./pokemon-types"
 import { loadPokemonListFromFile, loadPokemonFullDataFromFile } from "./pokemon-data-loader"
-import type { Pokemon } from "./pokemon-types"
 
 const API_BASE = "https://pokeapi.co/api/v2"
 
@@ -63,10 +62,9 @@ export async function fetchPokemonList(): Promise<PokemonListItem[]> {
         species.names.forEach((n) => {
           if (n.language.name === "en") names.en = n.name
           if (n.language.name === "zh-Hans") names.zh = n.name
-          if (n.language.name === "zh-Hant") names.zhHant = n.name
+          if (n.language.name === "zh-Hant" && !names.zh) names.zh = n.name
           if (n.language.name === "ja") names.ja = n.name
         })
-        if (!names.zh && names.zhHant) names.zh = names.zhHant
 
         return {
           id: pokemon.id,
@@ -110,9 +108,9 @@ function getGenerationFromId(id: number): number {
 }
 
 export async function fetchPokemonDetail(idOrName: number | string): Promise<Pokemon> {
-  // 优先从本地完整数据文件加载
+  // 优先从本地完整数据文件加载（按需加载）
   if (typeof idOrName === "number") {
-    const fullData = await loadPokemonFullDataFromFile()
+    const fullData = await loadPokemonFullDataFromFile([idOrName]) // 只加载指定的ID
     if (fullData && fullData[idOrName]) {
       const fullPokemon = fullData[idOrName]
       // 返回 Pokemon 格式（不包含 moves 和 locations，它们单独获取）
@@ -122,6 +120,171 @@ export async function fetchPokemonDetail(idOrName: number | string): Promise<Pok
       if (locationsChecked !== undefined) {
         (result as any).locationsChecked = locationsChecked
       }
+      
+      // 特例：洛托姆 (#479)、爱管侍 (#876) 和武道熊师 (#892) - 直接添加形态数据
+      if (idOrName === 479) {
+        // 洛托姆：添加5个电器形态
+        result.forms = [
+          {
+            name: "rotom-heat",
+            formName: "heat",
+            sprites: {
+              front: "/Pokemons/加热洛托姆.webp",
+              back: "",
+              frontShiny: "",
+              backShiny: "",
+              artwork: "/Pokemons/加热洛托姆.webp",
+              artworkShiny: "",
+            },
+            types: ["electric", "fire"], // 加热洛托姆是电+火
+          },
+          {
+            name: "rotom-wash",
+            formName: "wash",
+            sprites: {
+              front: "/Pokemons/清洗洛托姆.webp",
+              back: "",
+              frontShiny: "",
+              backShiny: "",
+              artwork: "/Pokemons/清洗洛托姆.webp",
+              artworkShiny: "",
+            },
+            types: ["electric", "water"], // 清洗洛托姆是电+水
+          },
+          {
+            name: "rotom-frost",
+            formName: "frost",
+            sprites: {
+              front: "/Pokemons/结冰洛托姆.webp",
+              back: "",
+              frontShiny: "",
+              backShiny: "",
+              artwork: "/Pokemons/结冰洛托姆.webp",
+              artworkShiny: "",
+            },
+            types: ["electric", "ice"], // 结冰洛托姆是电+冰
+          },
+          {
+            name: "rotom-fan",
+            formName: "fan",
+            sprites: {
+              front: "/Pokemons/旋转洛托姆.webp",
+              back: "",
+              frontShiny: "",
+              backShiny: "",
+              artwork: "/Pokemons/旋转洛托姆.webp",
+              artworkShiny: "",
+            },
+            types: ["electric", "flying"], // 旋转洛托姆是电+飞行
+          },
+          {
+            name: "rotom-mow",
+            formName: "mow",
+            sprites: {
+              front: "/Pokemons/切割洛托姆.webp",
+              back: "",
+              frontShiny: "",
+              backShiny: "",
+              artwork: "/Pokemons/切割洛托姆.webp",
+              artworkShiny: "",
+            },
+            types: ["electric", "grass"], // 切割洛托姆是电+草
+          },
+        ]
+        console.log(`✅ 为洛托姆添加了特例形态数据`)
+      } else if (idOrName === 876) {
+        // 爱管侍：添加雌性形态
+        result.forms = [{
+          name: "indeedee-female",
+          formName: "female",
+          sprites: {
+            front: "/Pokemons/爱管侍（雌性）.webp",
+            back: "",
+            frontShiny: "",
+            backShiny: "",
+            artwork: "/Pokemons/爱管侍（雌性）.webp",
+            artworkShiny: "",
+          },
+          types: ["psychic", "normal"], // 雌性形态也是超能力+一般
+        }]
+        console.log(`✅ 为爱管侍添加了特例形态数据`)
+      } else if (idOrName === 892) {
+        // 武道熊师：添加连击流形态
+        result.forms = [{
+          name: "urshifu-rapid-strike",
+          formName: "rapid-strike",
+          sprites: {
+            front: "/Pokemons/武道熊师（连击流）.webp",
+            back: "",
+            frontShiny: "",
+            backShiny: "",
+            artwork: "/Pokemons/武道熊师（连击流）.webp",
+            artworkShiny: "",
+          },
+          types: ["fighting", "water"], // 连击流是格斗+水
+        }]
+        console.log(`✅ 为武道熊师添加了特例形态数据`)
+      } else if (!result.forms || result.forms.length === 0) {
+        // 如果本地数据没有 forms 或 forms 为空，从 API 获取形态数据
+        try {
+          const pokemon = await fetchWithCache<{
+            name: string
+            species: { url: string }
+          }>(`${API_BASE}/pokemon/${idOrName}`)
+          
+          const speciesData = await fetchWithCache<{
+            varieties: { is_default: boolean; pokemon: { name: string; url: string } }[]
+          }>(pokemon.species.url)
+          
+          const forms: PokemonForm[] = []
+          for (const variety of speciesData.varieties) {
+            if (variety.is_default) continue
+            try {
+              const formPokemon = await fetchWithCache<{
+                name: string
+                types: { type: { name: string } }[]
+                sprites: {
+                  front_default: string
+                  back_default: string
+                  front_shiny: string
+                  back_shiny: string
+                  other: { "official-artwork": { front_default: string; front_shiny: string } }
+                }
+              }>(variety.pokemon.url)
+
+              const formName = formPokemon.name.replace(`${pokemon.name}-`, "")
+              
+              // 尝试使用本地图片
+              const { getFormImagePath } = await import("./form-image-map")
+              const localImagePath = getFormImagePath(pokemon.name, formName)
+              
+              forms.push({
+                name: formPokemon.name,
+                formName,
+                sprites: {
+                  front: localImagePath || formPokemon.sprites.front_default || "",
+                  back: formPokemon.sprites.back_default || "",
+                  frontShiny: formPokemon.sprites.front_shiny || "",
+                  backShiny: formPokemon.sprites.back_shiny || "",
+                  artwork: formPokemon.sprites.other["official-artwork"].front_default || "",
+                  artworkShiny: formPokemon.sprites.other["official-artwork"].front_shiny || "",
+                },
+                types: formPokemon.types.map((t) => t.type.name),
+              })
+            } catch {
+              // Skip forms that fail to load
+            }
+          }
+          
+          if (forms.length > 0) {
+            result.forms = forms
+            console.log(`✅ 从 API 补充了 ${forms.length} 个形态数据`)
+          }
+        } catch (error) {
+          console.warn(`⚠️ 无法从 API 获取形态数据:`, error)
+        }
+      }
+      
       console.log(`✅ 从本地文件加载了宝可梦详情 #${idOrName}`)
       return result
     }
@@ -207,9 +370,8 @@ export async function fetchPokemonDetail(idOrName: number | string): Promise<Pok
       abilityData.names.forEach((n) => {
         if (n.language.name === "en") abilityNames.en = n.name
         if (n.language.name === "zh-Hans") abilityNames.zh = n.name
-        if (n.language.name === "zh-Hant") abilityNames.zhHant = n.name
+        if (n.language.name === "zh-Hant" && !abilityNames.zh) abilityNames.zh = n.name
       })
-      if (!abilityNames.zh && abilityNames.zhHant) abilityNames.zh = abilityNames.zhHant
 
       let description = ""
       for (const f of abilityData.flavor_text_entries) {
@@ -287,9 +449,8 @@ export async function fetchPokemonDetail(idOrName: number | string): Promise<Pok
     speciesInfo.names.forEach((n) => {
       if (n.language.name === "en") evoNames.en = n.name
       if (n.language.name === "zh-Hans") evoNames.zh = n.name
-      if (n.language.name === "zh-Hant") evoNames.zhHant = n.name
+      if (n.language.name === "zh-Hant" && !evoNames.zh) evoNames.zh = n.name
     })
-    if (!evoNames.zh && evoNames.zhHant) evoNames.zh = evoNames.zhHant
 
     const evolvesToNodes = await Promise.all(
       (chain.evolves_to as (typeof evolutionData.chain)[]).map((e) => parseEvolutionChain(e)),
@@ -315,36 +476,149 @@ export async function fetchPokemonDetail(idOrName: number | string): Promise<Pok
 
   // Fetch forms
   const forms: PokemonForm[] = []
-  for (const variety of speciesData.varieties) {
-    if (variety.is_default) continue
-    try {
-      const formPokemon = await fetchWithCache<{
-        name: string
-        types: { type: { name: string } }[]
+  
+  // 特例：洛托姆 (#479)、爱管侍 (#876) 和武道熊师 (#892) - 直接添加形态数据
+  if (pokemon.id === 479) {
+    // 洛托姆：添加5个电器形态
+    forms.push(
+      {
+        name: "rotom-heat",
+        formName: "heat",
         sprites: {
-          front_default: string
-          back_default: string
-          front_shiny: string
-          back_shiny: string
-          other: { "official-artwork": { front_default: string; front_shiny: string } }
-        }
-      }>(variety.pokemon.url)
-
-      forms.push({
-        name: formPokemon.name,
-        formName: formPokemon.name.replace(`${pokemon.name}-`, ""),
-        sprites: {
-          front: formPokemon.sprites.front_default || "",
-          back: formPokemon.sprites.back_default || "",
-          frontShiny: formPokemon.sprites.front_shiny || "",
-          backShiny: formPokemon.sprites.back_shiny || "",
-          artwork: formPokemon.sprites.other["official-artwork"].front_default || "",
-          artworkShiny: formPokemon.sprites.other["official-artwork"].front_shiny || "",
+          front: "/Pokemons/加热洛托姆.webp",
+          back: "",
+          frontShiny: "",
+          backShiny: "",
+          artwork: "/Pokemons/加热洛托姆.webp",
+          artworkShiny: "",
         },
-        types: formPokemon.types.map((t) => t.type.name),
-      })
-    } catch {
-      // Skip forms that fail to load
+        types: ["electric", "fire"], // 加热洛托姆是电+火
+      },
+      {
+        name: "rotom-wash",
+        formName: "wash",
+        sprites: {
+          front: "/Pokemons/清洗洛托姆.webp",
+          back: "",
+          frontShiny: "",
+          backShiny: "",
+          artwork: "/Pokemons/清洗洛托姆.webp",
+          artworkShiny: "",
+        },
+        types: ["electric", "water"], // 清洗洛托姆是电+水
+      },
+      {
+        name: "rotom-frost",
+        formName: "frost",
+        sprites: {
+          front: "/Pokemons/结冰洛托姆.webp",
+          back: "",
+          frontShiny: "",
+          backShiny: "",
+          artwork: "/Pokemons/结冰洛托姆.webp",
+          artworkShiny: "",
+        },
+        types: ["electric", "ice"], // 结冰洛托姆是电+冰
+      },
+      {
+        name: "rotom-fan",
+        formName: "fan",
+        sprites: {
+          front: "/Pokemons/旋转洛托姆.webp",
+          back: "",
+          frontShiny: "",
+          backShiny: "",
+          artwork: "/Pokemons/旋转洛托姆.webp",
+          artworkShiny: "",
+        },
+        types: ["electric", "flying"], // 旋转洛托姆是电+飞行
+      },
+      {
+        name: "rotom-mow",
+        formName: "mow",
+        sprites: {
+          front: "/Pokemons/切割洛托姆.webp",
+          back: "",
+          frontShiny: "",
+          backShiny: "",
+          artwork: "/Pokemons/切割洛托姆.webp",
+          artworkShiny: "",
+        },
+        types: ["electric", "grass"], // 切割洛托姆是电+草
+      },
+    )
+    console.log(`✅ 为洛托姆添加了特例形态数据`)
+  } else if (pokemon.id === 876) {
+    // 爱管侍：添加雌性形态
+    forms.push({
+      name: "indeedee-female",
+      formName: "female",
+      sprites: {
+        front: "/Pokemons/爱管侍（雌性）.webp",
+        back: "",
+        frontShiny: "",
+        backShiny: "",
+        artwork: "/Pokemons/爱管侍（雌性）.webp",
+        artworkShiny: "",
+      },
+      types: ["psychic", "normal"], // 雌性形态也是超能力+一般
+    })
+    console.log(`✅ 为爱管侍添加了特例形态数据`)
+  } else if (pokemon.id === 892) {
+    // 武道熊师：添加连击流形态
+    forms.push({
+      name: "urshifu-rapid-strike",
+      formName: "rapid-strike",
+      sprites: {
+        front: "/Pokemons/武道熊师（连击流）.webp",
+        back: "",
+        frontShiny: "",
+        backShiny: "",
+        artwork: "/Pokemons/武道熊师（连击流）.webp",
+        artworkShiny: "",
+      },
+      types: ["fighting", "water"], // 连击流是格斗+水
+    })
+    console.log(`✅ 为武道熊师添加了特例形态数据`)
+  } else {
+    // 其他宝可梦从 API 获取形态数据
+    for (const variety of speciesData.varieties) {
+      if (variety.is_default) continue
+      try {
+        const formPokemon = await fetchWithCache<{
+          name: string
+          types: { type: { name: string } }[]
+          sprites: {
+            front_default: string
+            back_default: string
+            front_shiny: string
+            back_shiny: string
+            other: { "official-artwork": { front_default: string; front_shiny: string } }
+          }
+        }>(variety.pokemon.url)
+
+        const formName = formPokemon.name.replace(`${pokemon.name}-`, "")
+        
+        // 尝试使用本地图片
+        const { getFormImagePath } = await import("./form-image-map")
+        const localImagePath = getFormImagePath(pokemon.name, formName)
+        
+        forms.push({
+          name: formPokemon.name,
+          formName,
+          sprites: {
+            front: localImagePath || formPokemon.sprites.front_default || "",
+            back: formPokemon.sprites.back_default || "",
+            frontShiny: formPokemon.sprites.front_shiny || "",
+            backShiny: formPokemon.sprites.back_shiny || "",
+            artwork: formPokemon.sprites.other["official-artwork"].front_default || "",
+            artworkShiny: formPokemon.sprites.other["official-artwork"].front_shiny || "",
+          },
+          types: formPokemon.types.map((t) => t.type.name),
+        })
+      } catch {
+        // Skip forms that fail to load
+      }
     }
   }
 
@@ -375,16 +649,52 @@ export async function fetchPokemonDetail(idOrName: number | string): Promise<Pok
 }
 
 export async function fetchPokemonMoves(pokemonId: number, generation?: number): Promise<Move[]> {
-  // 优先从本地完整数据文件加载
-  const fullData = await loadPokemonFullDataFromFile()
-  if (fullData && fullData[pokemonId] && fullData[pokemonId].moves) {
-    let moves = fullData[pokemonId].moves
-    // 如果指定了世代，进行筛选
-    if (generation) {
-      moves = moves.filter((m) => m.generation <= generation)
+  // 优先从本地完整数据文件加载（按需加载）
+  const fullData = await loadPokemonFullDataFromFile([pokemonId]) // 只加载指定的ID
+  if (fullData && fullData[pokemonId]) {
+    // 如果数据中有按世代分组的招式
+    if (fullData[pokemonId].movesByGeneration) {
+      if (generation) {
+        // 返回指定世代及之前所有世代的招式（合并）
+        const allMoves: Move[] = []
+        for (let gen = 1; gen <= generation; gen++) {
+          const movesForGen = fullData[pokemonId].movesByGeneration?.[gen] || []
+          // 去重：如果招式已存在，保留较早世代的版本
+          movesForGen.forEach(move => {
+            const existing = allMoves.find(m => m.id === move.id)
+            if (!existing) {
+              allMoves.push(move)
+            }
+          })
+        }
+        console.log(`✅ 从本地文件加载了宝可梦 #${pokemonId} 世代 ${generation} 的 ${allMoves.length} 个招式`)
+        return allMoves
+      } else {
+        // 如果没有指定世代，返回所有世代的招式（合并）
+        const allMoves: Move[] = []
+        Object.values(fullData[pokemonId].movesByGeneration || {}).forEach((movesForGen: Move[]) => {
+          movesForGen.forEach(move => {
+            const existing = allMoves.find(m => m.id === move.id)
+            if (!existing) {
+              allMoves.push(move)
+            }
+          })
+        })
+        console.log(`✅ 从本地文件加载了宝可梦 #${pokemonId} 的所有世代招式，共 ${allMoves.length} 个`)
+        return allMoves
+      }
     }
-    console.log(`✅ 从本地文件加载了宝可梦 #${pokemonId} 的 ${moves.length} 个招式`)
-    return moves
+    
+    // 兼容旧的数据格式（moves 字段）
+    if (fullData[pokemonId].moves) {
+      let moves = fullData[pokemonId].moves
+      // 如果指定了世代，进行筛选
+      if (generation) {
+        moves = moves.filter((m) => m.generation <= generation)
+      }
+      console.log(`✅ 从本地文件加载了宝可梦 #${pokemonId} 的 ${moves.length} 个招式`)
+      return moves
+    }
   }
 
   // 如果本地文件没有，从 API 获取
@@ -432,9 +742,8 @@ export async function fetchPokemonMoves(pokemonId: number, generation?: number):
       moveData.names.forEach((n) => {
         if (n.language.name === "en") moveNames.en = n.name
         if (n.language.name === "zh-Hans") moveNames.zh = n.name
-        if (n.language.name === "zh-Hant") moveNames.zhHant = n.name
+        if (n.language.name === "zh-Hant" && !moveNames.zh) moveNames.zh = n.name
       })
-      if (!moveNames.zh && moveNames.zhHant) moveNames.zh = moveNames.zhHant
 
       let description = ""
       for (const f of moveData.flavor_text_entries) {
@@ -486,7 +795,7 @@ export async function fetchPokemonMoves(pokemonId: number, generation?: number):
 
 export async function fetchPokemonLocations(pokemonId: number, generation?: number): Promise<Location[]> {
   // 优先从本地完整数据文件加载
-  const fullData = await loadPokemonFullDataFromFile()
+  const fullData = await loadPokemonFullDataFromFile([pokemonId]) // 按需加载
   if (fullData && fullData[pokemonId] && fullData[pokemonId].locations) {
     let locations = fullData[pokemonId].locations
     // 如果指定了世代，进行筛选（但默认不筛选，显示所有世代）
@@ -541,9 +850,8 @@ export async function fetchPokemonLocations(pokemonId: number, generation?: numb
           locData.names.forEach((n) => {
             if (n.language.name === "en") locNames.en = n.name
             if (n.language.name === "zh-Hans") locNames.zh = n.name
-            if (n.language.name === "zh-Hant") locNames.zhHant = n.name
+            if (n.language.name === "zh-Hant" && !locNames.zh) locNames.zh = n.name
           })
-          if (!locNames.zh && locNames.zhHant) locNames.zh = locNames.zhHant
 
           for (const detail of vd.encounter_details) {
             locations.push({

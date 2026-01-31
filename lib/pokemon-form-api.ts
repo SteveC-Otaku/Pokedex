@@ -89,9 +89,8 @@ export async function fetchPokemonFormData(formName: string): Promise<{
         abilityData.names.forEach((n) => {
           if (n.language.name === "en") abilityNames.en = n.name
           if (n.language.name === "zh-Hans") abilityNames.zh = n.name
-          if (n.language.name === "zh-Hant") abilityNames.zhHant = n.name
+          if (n.language.name === "zh-Hant" && !abilityNames.zh) abilityNames.zh = n.name
         })
-        if (!abilityNames.zh && abilityNames.zhHant) abilityNames.zh = abilityNames.zhHant
 
         let description = ""
         for (const f of abilityData.flavor_text_entries) {
@@ -116,12 +115,18 @@ export async function fetchPokemonFormData(formName: string): Promise<{
       }
     }
 
+    // 尝试使用本地图片
+    const { getFormImagePath } = await import("./form-image-map")
+    const pokemonName = formName.split("-")[0] // 从 "urshifu-rapid-strike" 提取 "urshifu"
+    const formNameOnly = formName.replace(`${pokemonName}-`, "") // 提取 "rapid-strike"
+    const localImagePath = getFormImagePath(pokemonName, formNameOnly)
+    
     return {
       stats,
       types: formPokemon.types.map((t) => t.type.name),
       abilities,
       sprites: {
-        front: formPokemon.sprites.front_default || "",
+        front: localImagePath || formPokemon.sprites.front_default || "",
         back: formPokemon.sprites.back_default || "",
         frontShiny: formPokemon.sprites.front_shiny || "",
         backShiny: formPokemon.sprites.back_shiny || "",
@@ -190,9 +195,8 @@ export async function fetchPokemonFormMoves(formName: string, generation?: numbe
         moveData.names.forEach((n) => {
           if (n.language.name === "en") moveNames.en = n.name
           if (n.language.name === "zh-Hans") moveNames.zh = n.name
-          if (n.language.name === "zh-Hant") moveNames.zhHant = n.name
+          if (n.language.name === "zh-Hant" && !moveNames.zh) moveNames.zh = n.name
         })
-        if (!moveNames.zh && moveNames.zhHant) moveNames.zh = moveNames.zhHant
 
         let description = ""
         for (const f of moveData.flavor_text_entries) {

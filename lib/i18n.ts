@@ -56,6 +56,7 @@ export interface Translations {
   moreMoves: string
   noLocations: string
   noWildLocations: string
+  waitingForDataSource: string
   locationsNotLoaded: string
   locationStats: string
   withLocations: string
@@ -146,6 +147,31 @@ export interface Translations {
   noSavedTeams: string
   confirmDeleteTeam: string
   teamSaved: string
+  
+  // Type Effectiveness Calculator
+  typeEffectivenessCalculator: string
+  addSecondType: string
+  damageTaken: string
+  selectTypeFirst: string
+  takes4xDamage: string
+  takes2xDamage: string
+  takes1xDamage: string
+  takesHalfDamage: string
+  takesQuarterDamage: string
+  takes0xDamage: string
+  
+  // Coverage Calculator
+  coverageCalculator: string
+  selectMoveTypes: string
+  selectMoveTypesFirst: string
+  coverageResult: string
+  selectedTypes: string
+  deals4xDamage: string
+  deals2xDamage: string
+  deals1xDamage: string
+  dealsHalfDamage: string
+  dealsQuarterDamage: string
+  deals0xDamage: string
   teamLoaded: string
   teamDeleted: string
   renameTeam: string
@@ -194,7 +220,8 @@ export const translations: Record<Language, Translations> = {
     tmMoves: "技能机习得",
     moreMoves: "还有 {count} 个招式...",
     noLocations: "该宝可梦在选择的世代中没有野外出现地点",
-    noWildLocations: "该宝可梦在野外无出现地点",
+    noWildLocations: "无野生出现地点",
+    waitingForDataSource: "等待数据源更新",
     locationsNotLoaded: "出现地点数据未加载",
     locationStats: "出现地点统计",
     withLocations: "有出现地点",
@@ -276,6 +303,27 @@ export const translations: Record<Language, Translations> = {
     teamLoaded: "队伍已加载",
     teamDeleted: "队伍已删除",
     renameTeam: "重命名队伍",
+    typeEffectivenessCalculator: "属性克制计算器",
+    addSecondType: "添加第二个属性（可选）",
+    damageTaken: "受到的伤害",
+    selectTypeFirst: "请先选择一个属性",
+    takes4xDamage: "受到 4× 伤害",
+    takes2xDamage: "受到 2× 伤害",
+    takes1xDamage: "受到 1× 伤害",
+    takesHalfDamage: "受到 1/2× 伤害",
+    takesQuarterDamage: "受到 1/4× 伤害",
+    takes0xDamage: "受到 0× 伤害（免疫）",
+    coverageCalculator: "打击面计算器",
+    selectMoveTypes: "选择技能属性（可多选）",
+    selectMoveTypesFirst: "请先选择技能属性",
+    coverageResult: "打击面结果",
+    selectedTypes: "已选择",
+    deals4xDamage: "造成 4× 伤害",
+    deals2xDamage: "造成 2× 伤害",
+    deals1xDamage: "造成 1× 伤害",
+    dealsHalfDamage: "造成 1/2× 伤害",
+    dealsQuarterDamage: "造成 1/4× 伤害",
+    deals0xDamage: "造成 0× 伤害（无效）",
   },
   en: {
     loading: "Loading...",
@@ -319,7 +367,8 @@ export const translations: Record<Language, Translations> = {
     tmMoves: "TM/TR",
     moreMoves: "{count} more moves...",
     noLocations: "This Pokémon has no wild locations in the selected generation",
-    noWildLocations: "This Pokémon has no wild locations",
+    noWildLocations: "No wild locations",
+    waitingForDataSource: "Waiting for data source update",
     locationsNotLoaded: "Location data not loaded",
     locationStats: "Location Statistics",
     withLocations: "With Locations",
@@ -401,6 +450,27 @@ export const translations: Record<Language, Translations> = {
     teamLoaded: "Team loaded",
     teamDeleted: "Team deleted",
     renameTeam: "Rename Team",
+    typeEffectivenessCalculator: "Type Effectiveness Calculator",
+    addSecondType: "Add a Second Type (Optional)",
+    damageTaken: "Damage Taken",
+    selectTypeFirst: "Please select a type first",
+    takes4xDamage: "Takes 4x Damage From",
+    takes2xDamage: "Takes 2x Damage From",
+    takes1xDamage: "Takes 1x Damage From",
+    takesHalfDamage: "Takes 1/2x Damage From",
+    takesQuarterDamage: "Takes 1/4x Damage From",
+    takes0xDamage: "Takes 0x Damage From",
+    coverageCalculator: "Coverage Calculator",
+    selectMoveTypes: "Select Move Types (Multiple)",
+    selectMoveTypesFirst: "Please select move types first",
+    coverageResult: "Coverage Result",
+    selectedTypes: "Selected",
+    deals4xDamage: "Deals 4x Damage To",
+    deals2xDamage: "Deals 2x Damage To",
+    deals1xDamage: "Deals 1x Damage To",
+    dealsHalfDamage: "Deals 1/2x Damage To",
+    dealsQuarterDamage: "Deals 1/4x Damage To",
+    deals0xDamage: "Deals 0x Damage To",
   },
   ja: {
     loading: "読み込み中...",
@@ -445,6 +515,7 @@ export const translations: Record<Language, Translations> = {
     moreMoves: "あと {count} 個の技...",
     noLocations: "選択した世代では野生で出現しません",
     noWildLocations: "野生で出現しません",
+    waitingForDataSource: "データソースの更新を待っています",
     locationsNotLoaded: "出現場所データが読み込まれていません",
     locationStats: "出現場所統計",
     withLocations: "出現場所あり",
@@ -526,6 +597,27 @@ export const translations: Record<Language, Translations> = {
     teamLoaded: "チームを読み込みました",
     teamDeleted: "チームを削除しました",
     renameTeam: "チーム名を変更",
+    typeEffectivenessCalculator: "タイプ相性計算機",
+    addSecondType: "2つ目のタイプを追加（オプション）",
+    damageTaken: "受けるダメージ",
+    selectTypeFirst: "まずタイプを選択してください",
+    takes4xDamage: "4倍のダメージを受ける",
+    takes2xDamage: "2倍のダメージを受ける",
+    takes1xDamage: "1倍のダメージを受ける",
+    takesHalfDamage: "1/2倍のダメージを受ける",
+    takesQuarterDamage: "1/4倍のダメージを受ける",
+    takes0xDamage: "0倍のダメージを受ける（無効）",
+    coverageCalculator: "カバレッジ計算機",
+    selectMoveTypes: "技のタイプを選択（複数選択可）",
+    selectMoveTypesFirst: "まず技のタイプを選択してください",
+    coverageResult: "カバレッジ結果",
+    selectedTypes: "選択済み",
+    deals4xDamage: "4倍のダメージを与える",
+    deals2xDamage: "2倍のダメージを与える",
+    deals1xDamage: "1倍のダメージを与える",
+    dealsHalfDamage: "1/2倍のダメージを与える",
+    dealsQuarterDamage: "1/4倍のダメージを与える",
+    deals0xDamage: "0倍のダメージを与える（無効）",
   },
 }
 

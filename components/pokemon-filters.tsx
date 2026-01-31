@@ -84,17 +84,18 @@ export function PokemonFilters({
   ]
 
   return (
-    <div className="space-y-3">
+    <div className="pokedex-filters space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         {/* 世代/地区选择 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              {filters.region === null 
-                ? t.allGenerations 
-                : REGION_NAMES_ZH[filters.region] || GENERATIONS.find(g => g.region === filters.region)?.names[language]
-              }
+            <Button variant="outline" size="sm" className="gap-2 min-w-0 text-left">
+              <Filter className="h-4 w-4 shrink-0" />
+              <span className="break-words">
+                {filters.region === null
+                  ? t.allGenerations
+                  : REGION_NAMES_ZH[filters.region] || GENERATIONS.find(g => g.region === filters.region)?.names[language]}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
@@ -103,7 +104,7 @@ export function PokemonFilters({
             <DropdownMenuRadioGroup 
               value={filters.region || "all"} 
               onValueChange={(value) => setRegion(value === "all" ? null : value)}
-            >
+              >
               <DropdownMenuRadioItem value="all">
                 {t.allGenerations}
               </DropdownMenuRadioItem>
@@ -111,7 +112,7 @@ export function PokemonFilters({
                 <DropdownMenuRadioItem key={gen.region} value={gen.region}>
                   {REGION_NAMES_ZH[gen.region]} ({gen.names[language] || gen.names.zh})
                 </DropdownMenuRadioItem>
-              ))}
+            ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -119,8 +120,8 @@ export function PokemonFilters({
         {/* 属性多选 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              {t.type}
+            <Button variant="outline" size="sm" className="gap-2 min-w-0 shrink-0">
+              <span className="whitespace-nowrap">{t.type}</span>
               {filters.types.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
                   {filters.types.length}
@@ -147,7 +148,7 @@ export function PokemonFilters({
                         : 'ring-2 ring-white/20 hover:ring-white/40'
                       }
                     `}
-                  >
+              >
                     <span>
                       {getTypeName(type, language)}
                     </span>
@@ -164,9 +165,9 @@ export function PokemonFilters({
         {/* 排序选择 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              {t.sort}
-              <span className="text-muted-foreground text-xs">
+            <Button variant="outline" size="sm" className="gap-2 min-w-0">
+              <span className="whitespace-nowrap">{t.sort}</span>
+              <span className="text-muted-foreground text-xs whitespace-nowrap hidden sm:inline">
                 ({SORT_OPTIONS.find(opt => opt.value === sortBy)?.label || t.sortById})
               </span>
             </Button>
